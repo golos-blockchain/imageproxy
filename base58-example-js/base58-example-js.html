@@ -1,0 +1,177 @@
+<script>
+// Polyfills to support Internet Explorer
+// Also required for Node.js 10 or older
+
+if (!String.prototype.codePointAt) {
+    String.prototype.codePointAt = function (pos) {
+        pos = isNaN(pos) ? 0 : pos;
+        var str = String(this),
+            code = str.charCodeAt(pos),
+            next = str.charCodeAt(pos + 1);
+        // If a surrogate pair
+        if (0xD800 <= code && code <= 0xDBFF && 0xDC00 <= next && next <= 0xDFFF) {
+            return ((code - 0xD800) * 0x400) + (next - 0xDC00) + 0x10000;
+        }
+        return code;
+    };
+}
+if (!String.fromCodePoint) {
+    String.fromCodePoint = function () {
+        var chars = [], point, offset, units, i;
+        for (i = 0; i < arguments.length; ++i) {
+            point = arguments[i];
+            offset = point - 0x10000;
+            units = point > 0xFFFF ? [0xD800 + (offset >> 10), 0xDC00 + (offset & 0x3FF)] : [point];
+            chars.push(String.fromCharCode.apply(null, units));
+        }
+        return chars.join("");
+    };
+}
+
+if (typeof TextEncoder === 'undefined') {
+function TextEncoder() {
+}
+
+TextEncoder.prototype.encode = function (string) {
+  var octets = [];
+  var length = string.length;
+  var i = 0;
+  while (i < length) {
+    var codePoint = string.codePointAt(i);
+    var c = 0;
+    var bits = 0;
+    if (codePoint <= 0x0000007F) {
+      c = 0;
+      bits = 0x00;
+    } else if (codePoint <= 0x000007FF) {
+      c = 6;
+      bits = 0xC0;
+    } else if (codePoint <= 0x0000FFFF) {
+      c = 12;
+      bits = 0xE0;
+    } else if (codePoint <= 0x001FFFFF) {
+      c = 18;
+      bits = 0xF0;
+    }
+    octets.push(bits | (codePoint >> c));
+    c -= 6;
+    while (c >= 0) {
+      octets.push(0x80 | ((codePoint >> c) & 0x3F));
+      c -= 6;
+    }
+    i += codePoint >= 0x10000 ? 2 : 1;
+  }
+  return octets;
+};
+}
+
+if (typeof TextDecoder === 'undefined') {
+function TextDecoder() {
+}
+
+TextDecoder.prototype.decode = function (octets) {
+  var string = "";
+  var i = 0;
+  while (i < octets.length) {
+    var octet = octets[i];
+    var bytesNeeded = 0;
+    var codePoint = 0;
+    if (octet <= 0x7F) {
+      bytesNeeded = 0;
+      codePoint = octet & 0xFF;
+    } else if (octet <= 0xDF) {
+      bytesNeeded = 1;
+      codePoint = octet & 0x1F;
+    } else if (octet <= 0xEF) {
+      bytesNeeded = 2;
+      codePoint = octet & 0x0F;
+    } else if (octet <= 0xF4) {
+      bytesNeeded = 3;
+      codePoint = octet & 0x07;
+    }
+    if (octets.length - i - bytesNeeded > 0) {
+      var k = 0;
+      while (k < bytesNeeded) {
+        octet = octets[i + k + 1];
+        codePoint = (codePoint << 6) | (octet & 0x3F);
+        k += 1;
+      }
+    } else {
+      codePoint = 0xFFFD;
+      bytesNeeded = octets.length - i;
+    }
+    string += String.fromCodePoint(codePoint);
+    i += bytesNeeded + 1;
+  }
+  return string
+};
+}
+</script>
+<script>
+// Functions to encode/decode base-58
+
+var MAP = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+function to_b58(B) { //Uint8Array raw byte input
+    var d = [],   //the array for storing the stream of base58 digits
+        s = "",   //the result string variable that will be returned
+        i,        //the iterator variable for the byte input
+        j,        //the iterator variable for the base58 digit array (d)
+        c,        //the carry amount variable that is used to overflow from the current base58 digit to the next base58 digit
+        n;        //a temporary placeholder variable for the current base58 digit
+    for(var i = 0; i < B.length; ++i) { //loop through each byte in the input stream
+        j = 0,                           //reset the base58 digit iterator
+        c = B[i];                        //set the initial carry amount equal to the current byte amount
+        s += c || s.length ^ i ? "" : 1; //prepend the result string with a "1" (0 in base58) if the byte stream is zero and non-zero bytes haven't been seen yet (to ensure correct decode length)
+        while(j in d || c) {             //start looping through the digits until there are no more digits and no carry amount
+            n = d[j];                    //set the placeholder for the current base58 digit
+            n = n ? n * 256 + c : c;     //shift the current base58 one byte and add the carry amount (or just add the carry amount if this is a new digit)
+            c = n / 58 | 0;              //find the new carry amount (floored integer of current digit divided by 58)
+            d[j] = n % 58;               //reset the current base58 digit to the remainder (the carry amount will pass on the overflow)
+            j++                          //iterate to the next base58 digit
+        }
+    }
+    while(j--)        //since the base58 digits are backwards, loop through them in reverse order
+        s += MAP[d[j]]; //lookup the character associated with each base58 digit
+    return s          //return the final base58 string
+}
+
+function from_b58(S) {
+    var d = [],   //the array for storing the stream of decoded bytes
+        b = [],   //the result byte array that will be returned
+        i,        //the iterator variable for the base58 string
+        j,        //the iterator variable for the byte array (d)
+        c,        //the carry amount variable that is used to overflow from the current byte to the next byte
+        n;        //a temporary placeholder variable for the current byte
+    for (var i = 0; i < S.length; ++i) { //loop through each base58 character in the input string
+        j = 0,                             //reset the byte iterator
+		c = MAP.indexOf( S[i] );             //set the initial carry amount equal to the current base58 digit
+        if(c < 0)                          //see if the base58 digit lookup is invalid (-1)
+            return undefined;              //if invalid base58 digit, bail out and return undefined
+        c || b.length ^ i ? i : b.push(0); //prepend the result array with a zero if the base58 digit is zero and non-zero characters haven't been seen yet (to ensure correct decode length)
+        while(j in d || c) {               //start looping through the bytes until there are no more bytes and no carry amount
+            n = d[j];                      //set the placeholder for the current byte
+            n = n ? n * 58 + c : c;        //shift the current byte 58 units and add the carry amount (or just add the carry amount if this is a new byte)
+            c = n >> 8;                    //find the new carry amount (1-byte shift of current byte value)
+            d[j] = n % 256;                //reset the current byte to the remainder (the carry amount will pass on the overflow)
+            j++                            //iterate to the next byte
+        }
+    }
+    while(j--)               //since the byte array is backwards, loop through it in reverse order
+        b.push( d[j] );      //append each byte to the result
+    var res = new Uint8Array(b) //return the final byte array in Uint8Array format
+	return res
+}
+
+var enc = new TextEncoder(); // utf-8
+var bytes = enc.encode('https://i.imgur.com/Ijsd5oz.jpg');
+document.write('bytes: ', bytes, '<br>')
+var b58 = to_b58(bytes);
+document.write('b58 image url: ', '<b>', b58, '</b><br>');
+
+document.write('<br>');
+var bytes2 = from_b58(b58);
+document.write('bytes again: ', bytes2, '<br>');
+var dec = new TextDecoder();
+document.write('decoded URL: ', '<b>', dec.decode(bytes2), '</b><br>');
+</script>
