@@ -4,4 +4,4 @@ proxy = true
 log_level = 'info'
 rpc_node = 'https://api.steemit.com'
 [proxy_store]
-type = 's3'
+type = 'fs'

@@ -34,6 +34,8 @@ function loadStore(key: string): AbstractBlobStore {
     if (conf.type === 'memory') {
         logger.warn('using memory store for %s', key)
         return require('abstract-blob-store')()
+    } else if (conf.type === 'fs') {
+        return require('fs-blob-store')('cache')
     } else if (conf.type === 's3') {
         if (!S3Client) {
             const aws = require('aws-sdk')

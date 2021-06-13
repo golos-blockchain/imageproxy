@@ -30,13 +30,13 @@ log_output = 'stdout'
 # max image size to allow proxying, in bytes
 max_image_size = 15000000 # 15mb
 
-# blob stores, valid types are: memory, s3
+# blob stores, valid types are: memory, fs, s3
 # the s3 type additionally needs the s3_bucket key to be set and expects
 # the proper AWS credentials to be configured (see aws-sdk for more info)
 
 # where to keep proxied images
 [proxy_store]
-type = 'memory'
+type = 'fs'
 max_image_width = 1280
 max_image_height = 8000
 max_custom_image_width = 8000

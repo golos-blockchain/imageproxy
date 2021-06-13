@@ -16,6 +16,7 @@
     "bunyan": "^2.0.2",
     "busboy": "^0.2.14",
     "config": "^1.29.4",
+    "fs-blob-store": "^6.0.0",
     "hivesigner": "^3.2.0",
     "koa": "^2.3.0",
     "koa-router": "^7.4.0",
