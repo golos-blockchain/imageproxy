@@ -8,10 +8,7 @@ import * as fs from 'fs'
 import * as sharp from 'sharp'
 
 import {app} from './../src/app'
-import {proxyStore, uploadStore} from './../src/common'
 import {storeExists, base58Enc} from './../src/utils'
-
-import {uploadImage} from './upload'
 
 describe('proxy', function() {
     const port = 63205
@@ -66,17 +63,6 @@ describe('proxy', function() {
         assert.equal(meta.height, 67)
         assert.equal(meta.format, 'jpeg')
         assert.equal(meta.space, 'srgb')
-    })
-
-    it('should proxy directly from upload store', async function() {
-        this.slow(1000)
-        serveImage = false
-        const uploaded = await uploadImage(fs.readFileSync(path.resolve(__dirname, 'test.jpg')), port)
-        const [key, fname] = uploaded.body.url.split('/').slice(-2)
-        const res = await needle('get', `http://localhost:${ port }/0x0/${ uploaded.body.url }`)
-        const image = sharp(res.body)
-        const meta = await image.metadata()
-        assert((await storeExists(proxyStore, key)) === false, 'proxy store has original')
     })
 
     it('should proxy using new api', async function() {

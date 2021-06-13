@@ -27,26 +27,12 @@ log_level = 'debug'
 # where to write logs, can be file path or stdout/err
 log_output = 'stdout'
 
-# max image size to allow uploading and proxying, in bytes
+# max image size to allow proxying, in bytes
 max_image_size = 15000000 # 15mb
-
-# redis db used for ratelimiting uploads
-# redis_url = 'redis://localhost'
-
-# upload rate and reputation limits, rate limits only enforced if redis db is configured
-[upload_limits]
-duration = 604800000 # in ms (=1 week)
-max = 300 # max requests within duration
-reputation = 10 # minimum reputation needed for upload
-app_account = 'hive.blog'
 
 # blob stores, valid types are: memory, s3
 # the s3 type additionally needs the s3_bucket key to be set and expects
 # the proper AWS credentials to be configured (see aws-sdk for more info)
-
-# where to keep uploaded images
-[upload_store]
-type = 'memory'
 
 # where to keep proxied images
 [proxy_store]

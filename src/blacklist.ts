@@ -1,4 +1,4 @@
-/** Upload and proxying blacklists. In the future this will live on-chain. */
+/** Proxying blacklist. In the future this will live on-chain. */
 
 interface Blacklist<T> {
     includes: (item: T) => boolean
@@ -142,9 +142,3 @@ export const imageBlacklist: Blacklist<string> = [
     'https://files.peakd.com/file/peakd-hive/keitosama/i9jskuOZ-668CA97C-B1C8-4336-98E3-D325DCFF7047.jpeg',
     'https://images.hive.blog/DQmNvk94uq6VAgS3t4zAeQCezGCToqGNsUkv4fkPo4NwVDm/image.png'
   ]
-
-export const accountBlacklist: Blacklist<string> = [
-    'mpspringer',
-    'aplomb',
-    'iamgod',
-]
