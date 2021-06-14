@@ -28,7 +28,6 @@ if (config.has('redis_url')) {
 
 /** Blob storage. */
 
-let S3Client: any
 function loadStore(key: string): AbstractBlobStore {
     const conf = config.get(key) as any
     if (conf.type === 'memory') {
@@ -36,15 +35,6 @@ function loadStore(key: string): AbstractBlobStore {
         return require('abstract-blob-store')()
     } else if (conf.type === 'fs') {
         return require('fs-blob-store')('cache')
-    } else if (conf.type === 's3') {
-        if (!S3Client) {
-            const aws = require('aws-sdk')
-            S3Client = new aws.S3()
-        }
-        return require('s3-blob-store')({
-            client: S3Client,
-            bucket: conf.get('s3_bucket'),
-        })
     } else {
         throw new Error(`Invalid storage type: ${ conf.type }`)
     }

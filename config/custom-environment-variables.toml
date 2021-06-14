@@ -8,7 +8,6 @@ default_avatar = 'DEFAULT_AVATAR'
 rpc_node = 'RPC_NODE'
 [proxy_store]
 type = 'PROXY_STORAGE_TYPE'
-s3_bucket = 'PROXY_S3_BUCKET'
 max_image_width = 'PROXY_MAX_IMAGE_WIDTH'
 max_image_height = 'PROXY_MAX_IMAGE_HEIGHT'
 max_custom_image_width = 'PROXY_MAX_CUSTOM_IMAGE_WIDTH'
