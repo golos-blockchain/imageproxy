@@ -3,7 +3,6 @@
 import {AbstractBlobStore} from 'abstract-blob-store'
 import * as config from 'config'
 import {IRouterContext} from 'koa-router'
-import * as Redis from 'redis'
 
 import {logger} from './logger'
 
@@ -12,14 +11,6 @@ export interface KoaContext extends IRouterContext {
     [k: string]: any
     log: typeof logger
     tag: (metadata: any) => void
-}
-
-/** Redis client. */
-export let redisClient: Redis.RedisClient | undefined
-if (config.has('redis_url')) {
-    redisClient = Redis.createClient({
-        url: config.get('redis_url') as string
-    })
 }
 
 /** Blob storage. */
