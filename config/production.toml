@@ -1,5 +1,5 @@
 num_workers = 0
-port = 3234
+port = 8800
 proxy = true
 log_level = 'info'
 [proxy_store]
