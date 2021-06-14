@@ -1,6 +1,5 @@
 /** Misc shared instances. */
 
-import {Client} from '@hiveio/dhive'
 import {AbstractBlobStore} from 'abstract-blob-store'
 import * as config from 'config'
 import {IRouterContext} from 'koa-router'
@@ -14,9 +13,6 @@ export interface KoaContext extends IRouterContext {
     log: typeof logger
     tag: (metadata: any) => void
 }
-
-/** Steemd (jussi) RPC client. */
-export const rpcClient = new Client(config.get('rpc_node'))
 
 /** Redis client. */
 export let redisClient: Redis.RedisClient | undefined

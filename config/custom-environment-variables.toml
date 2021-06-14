@@ -4,8 +4,6 @@ num_workers = 'NUM_WORKERS'
 log_level = 'LOG_LEVEL'
 log_output = 'LOG_OUTPUT'
 service_url = 'SERVICE_URL'
-default_avatar = 'DEFAULT_AVATAR'
-rpc_node = 'RPC_NODE'
 [proxy_store]
 type = 'PROXY_STORAGE_TYPE'
 max_image_width = 'PROXY_MAX_IMAGE_WIDTH'

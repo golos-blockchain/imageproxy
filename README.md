@@ -98,15 +98,3 @@ Downloads and serves the provided `image_url`, note that a copy will be taken of
 
 `width` and `height` can be set to `0` to preserve the image dimensions, if they are `>0` the image will be aspect resized (down-sample only) to fit inside the rectangle.
 
-#### `GET /u/<username>/avatar/[<size>]` - get user avatar image.
-
-Serves the avatar for `username`, if no avatar is set a default image will be served (set in service config).
-
-Sizes are:
-
-  * `small` - 64x64
-  * `medium` - 128x128
-  * `large` - 512x512
-
-Note that the avatars follow the same sizing rules as proxied images, so you are not guaranteed to get a square image, just an image fitting inside of the `size` square.
-
