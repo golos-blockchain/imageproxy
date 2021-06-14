@@ -5,10 +5,32 @@ imageproxy
 High-speed, secure image proxying service for GOLOS Blockchain.
 
 
+Deployment
+----------
+
+```
+docker build -t golosblockchain/imageproxy .
+
+docker run -d -p 8800:8800 --name golos-imageproxy golosblockchain/imageproxy
+```
+
+
 Developing
 ----------
 
-With node.js (10.x) installed, run:
+Recommended OS is Ubuntu.
+
+```
+sudo apt-get remove nodejs
+curl -fsSL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+npm install --global yarn
+
+sudo apt-get install build-essential
+```
+
+Run:
 
 ```
 make devserver

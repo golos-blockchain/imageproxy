@@ -40,6 +40,7 @@ RUN apk add \
 COPY --from=build-stage /app/config config
 COPY --from=build-stage /app/lib lib
 COPY --from=build-stage /app/node_modules node_modules
+COPY --from=build-stage /app/cache cache
 
 # run in production mode
 ENV NODE_ENV production
