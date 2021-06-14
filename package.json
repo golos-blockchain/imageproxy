@@ -9,7 +9,6 @@
     "node": ">=8"
   },
   "dependencies": {
-    "@hiveio/dhive": "^0.14.0",
     "@koa/cors": "^2.2.1",
     "abstract-blob-store": "^3.3.4",
     "aws-sdk": "^2.188.0",
@@ -17,15 +16,11 @@
     "busboy": "^0.2.14",
     "config": "^1.29.4",
     "fs-blob-store": "^6.0.0",
-    "hivesigner": "^3.2.0",
     "koa": "^2.3.0",
     "koa-router": "^7.4.0",
     "mmmagic": "^0.5.0",
     "multihashes": "^0.4.13",
     "needle": "^2.1.1",
-    "ratelimiter": "^3.0.3",
-    "redis": "^2.8.0",
-    "s3-blob-store": "^3.2.0",
     "sharp": "^0.21.0",
     "stream-head": "^1.1.0",
     "toml": "^2.3.3"

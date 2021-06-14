@@ -72,7 +72,7 @@ If only `width` or `height` are given their counterpart will be calculated based
 
 Upstream image: `https://ipfs.io/ipfs/QmXa4dAFEhGEuZaX7uUSEvBjbEY5mPxkaS2zHZSnHvocpn` (Base58 encoded `46aP2QbqUqBqwzwxM6L1P6uLNceBDDCM9ZJdv282fpHyc9Wgcz1FduB11aVXtczv9TiCSHF1eEmnRSSdQWQEXA5krJNq`)
 
-Proxy the image as-is:
+Proxy the image:
 ```
 https://steemitimages.com/p/46aP2QbqUqBqwzwxM6L1P6uLNceBDDCM9ZJdv282fpHyc9Wgcz1FduB11aVXtczv9TiCSHF1eEmnRSSdQWQEXA5krJNq
 ```
@@ -97,16 +97,4 @@ https://steemitimages.com/p/46aP2QbqUqBqwzwxM6L1P6uLNceBDDCM9ZJdv282fpHyc9Wgcz1F
 Downloads and serves the provided `image_url`, note that a copy will be taken of the image and that will be served on subsequent requests so even if the upstream is removed or changes you will still get the original from the proxy endpoint.
 
 `width` and `height` can be set to `0` to preserve the image dimensions, if they are `>0` the image will be aspect resized (down-sample only) to fit inside the rectangle.
-
-#### `GET /u/<username>/avatar/[<size>]` - get user avatar image.
-
-Serves the avatar for `username`, if no avatar is set a default image will be served (set in service config).
-
-Sizes are:
-
-  * `small` - 64x64
-  * `medium` - 128x128
-  * `large` - 512x512
-
-Note that the avatars follow the same sizing rules as proxied images, so you are not guaranteed to get a square image, just an image fitting inside of the `size` square.
 
