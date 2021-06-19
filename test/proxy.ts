@@ -39,7 +39,7 @@ describe('proxy', function() {
         const meta = await image.metadata()
         assert.equal(meta.width, 1280)
         assert.equal(meta.height, 853)
-        assert.equal(meta.format, 'jpeg')
+        assert.equal(meta.format, 'webp')
         assert.equal(meta.space, 'srgb')
     })
 
@@ -50,7 +50,7 @@ describe('proxy', function() {
         const meta = await image.metadata()
         assert.equal(meta.width, 100)
         assert.equal(meta.height, 67)
-        assert.equal(meta.format, 'jpeg')
+        assert.equal(meta.format, 'webp')
         assert.equal(meta.space, 'srgb')
     })
 
@@ -61,7 +61,7 @@ describe('proxy', function() {
         const meta = await image.metadata()
         assert.equal(meta.width, 100)
         assert.equal(meta.height, 67)
-        assert.equal(meta.format, 'jpeg')
+        assert.equal(meta.format, 'webp')
         assert.equal(meta.space, 'srgb')
     })
 

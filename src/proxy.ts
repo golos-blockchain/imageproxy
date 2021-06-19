@@ -253,13 +253,15 @@ export async function proxyHandler(ctx: KoaContext) {
 
     let rv: Buffer
     if (contentType === 'image/gif' &&
-        options.width === undefined &&
-        options.height === undefined &&
-        options.format === OutputFormat.Match &&
+        (!options.width ||
+        options.width > (safeParseInt(config.get('proxy_store.max_avatar_width')) || 0)) &&
+        (!options.height ||
+        options.height > (safeParseInt(config.get('proxy_store.max_avatar_height')) || 0)) &&
+        (options.format === OutputFormat.Match || options.format === OutputFormat.WEBP) &&
         options.mode === ScalingMode.Fit
     ) {
-        // pass trough gif if requested with original size
-        // this is needed since resizing gifs creates still images
+        // pass through gif if requested with original size
+        // this is needed since resizing gifs (and convertion to webp, too) removes animation
         rv = origData
     } else {
         const image = Sharp(origData).jpeg({
@@ -284,8 +286,8 @@ export async function proxyHandler(ctx: KoaContext) {
 
         const maxWidth: number = safeParseInt(config.get('proxy_store.max_image_width')) || 1280
         const maxHeight: number = safeParseInt(config.get('proxy_store.max_image_height')) || 8000
-        const maxCustomWidth: number = safeParseInt(config.get('proxy_store.max_custom_image_width')) || 8000
-        const maxCustomHeight: number = safeParseInt(config.get('proxy_store.max_custom_image_height')) || 8000
+        const maxResizeWidth: number = safeParseInt(config.get('proxy_store.max_resize_image_width')) || 8000
+        const maxResizeHeight: number = safeParseInt(config.get('proxy_store.max_resize_image_height')) || 8000
         let width: number | undefined = safeParseInt(options.width)
         let height: number | undefined = safeParseInt(options.height)
 
@@ -297,12 +299,12 @@ export async function proxyHandler(ctx: KoaContext) {
         // height. This is so clients who need a higher-res image can still get
         // one.
         if (width) {
-          if (width > maxCustomWidth) { width = maxCustomWidth }
+          if (width > maxResizeWidth) { width = maxResizeHeight }
         } else {
           if (metadata.width && metadata.width > maxWidth) { width = maxWidth }
         }
         if (height) {
-          if (height > maxCustomHeight) { height = maxCustomHeight }
+          if (height > maxResizeWidth) { height = maxResizeHeight }
         } else {
           if (metadata.height && metadata.height > maxHeight) { height = maxHeight }
         }
@@ -332,7 +334,7 @@ export async function proxyHandler(ctx: KoaContext) {
                 break
             case OutputFormat.WEBP:
                 contentType = 'image/webp'
-                image.webp({force: true})
+                image.webp({force: true, quality: 30})
                 break
         }
 
