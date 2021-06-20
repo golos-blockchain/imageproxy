@@ -261,7 +261,7 @@ export async function proxyHandler(ctx: KoaContext) {
         options.mode === ScalingMode.Fit
     ) {
         // pass through gif if requested with original size
-        // this is needed since resizing gifs (and convertion to webp, too) removes animation
+        // this is needed since resizing gifs (and conversion to webp, too) removes animation
         rv = origData
     } else {
         const image = Sharp(origData).jpeg({
