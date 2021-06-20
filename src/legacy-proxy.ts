@@ -1,5 +1,6 @@
 /** Legacy proxy API redirects. */
 
+import * as config from 'config'
 import * as multihash from 'multihashes'
 import * as querystring from 'querystring'
 import {URL} from 'url'
@@ -30,7 +31,7 @@ export async function legacyProxyHandler(ctx: KoaContext) {
     }
 
     const options: {[key: string]: any} = {
-        format: 'match',
+        format: config.get('proxy_store.format'),
         mode: 'fit',
     }
     if (width > 0) { options['width'] = width }

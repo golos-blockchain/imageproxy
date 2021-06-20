@@ -4,3 +4,6 @@ proxy = true
 log_level = 'info'
 [proxy_store]
 type = 'fs'
+format = 'webp'
+max_avatar_width = 200
+max_avatar_height = 200
