@@ -31,7 +31,7 @@ export async function legacyProxyHandler(ctx: KoaContext) {
     }
 
     const options: {[key: string]: any} = {
-        format: config.get('proxy_store.format'),
+        format: config.get('proxy_store.format') || 'webp',
         mode: 'fit',
     }
     if (width > 0) { options['width'] = width }
