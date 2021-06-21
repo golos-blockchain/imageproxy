@@ -334,7 +334,7 @@ export async function proxyHandler(ctx: KoaContext) {
                 break
             case OutputFormat.WEBP:
                 contentType = 'image/webp'
-                image.webp({force: true, quality: 30})
+                image.webp({force: true, quality: 50})
                 break
         }
 
