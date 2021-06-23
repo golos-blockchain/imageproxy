@@ -10,10 +10,10 @@ proxy = false
 name = 'imagehoster'
 
 # number of worker processes to spawn, 0 = autodetect
-num_workers = 1
+num_workers = 0
 
 # url where service is running
-service_url = 'http://localhost:8800'
+service_url = 'https://devimages.golos.today'
 
 # log level to output at
 log_level = 'debug'
@@ -22,15 +22,16 @@ log_level = 'debug'
 log_output = 'stdout'
 
 # max image size to allow proxying, in bytes
-max_image_size = 15000000 # 15mb
+# if the image is larger, it will not be proxied and will give an error
+max_image_size = 10000000 # 10mb
 
 [proxy_store]
 # valid proxy store types are: 'memory', 'fs'
 type = 'fs'
-max_image_width = 1280
-max_image_height = 8000
-max_resize_image_width = 8000
-max_resize_image_height = 8000
+max_image_width = 1024
+max_image_height = 1280
+max_resize_image_width = 2560
+max_resize_image_height = 1440
 # forcely convert images, one of: 'webp', 'jpg', 'png' (not recommended for photos), 'match' (do not convert at all)
 format = 'webp'
 # for GIFs: maximum resize-width and resize-height to strip animated GIFs, because they are avatars. Larger GIF images will not be resized, because resizing removes animation.
