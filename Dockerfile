@@ -1,4 +1,4 @@
-FROM node:10-alpine as build-stage
+FROM node:14-alpine as build-stage
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN apk add \
     fftw-dev \
     git \
     make \
-    python
+    python3
 
 RUN apk add \
     --no-cache \
@@ -31,7 +31,7 @@ RUN make lib ci-test
 RUN yarn install --non-interactive --frozen-lockfile --production
 
 # copy built application to runtime image
-FROM node:10-alpine
+FROM node:14-alpine
 WORKDIR /app
 RUN apk add \
     --no-cache \
