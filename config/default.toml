@@ -1,39 +1,64 @@
-# default configuration, override in config/local-development.toml
+# default configuration, override in production.toml
 
-# port to listen on
+ # port to listen on
 port = 8800
 
-# whether the app runs behind a trusted proxy
+node_url = 'wss://apibeta.golos.today/ws'
+
+ # whether the app runs behind a trusted proxy
 proxy = false
 
-# application name used for logging and service namespace
+ # application name used for logging and service namespace
 name = 'imagehoster'
 
-# number of worker processes to spawn, 0 = autodetect
+ # number of worker processes to spawn, 0 = autodetect
 num_workers = 0
 
-# url where service is running
+ # url where service is running
 service_url = 'https://devimages.golos.today'
 
-# log level to output at
+ # log level to output at
 log_level = 'debug'
 
-# where to write logs, can be file path or stdout/err
+ # where to write logs, can be file path or stdout/err
 log_output = 'stdout'
 
-# max image size to allow proxying, in bytes
-# if the image is larger, it will not be proxied and will give an error
-max_image_size = 10000000 # 10mb
+[tarantool]
+host = '127.0.0.1'
+port = 49003
+username = 'guest'
+password = ''
 
-[proxy_store]
-# valid proxy store types are: 'memory', 'fs'
+ # upload rate and reputation limits
+[upload_limits]
+duration = 10080 # in minutes (=1 week)
+max = 300 # max requests within duration
+reputation = 10 # minimum reputation needed for upload
+
+ # valid proxy store types are: 'memory', 'fs'
+
+ # where to keep uploaded images
+[upload_store]
 type = 'fs'
+ # if the image is larger, it will not be uploaded and will give an error
+max_image_size = 10000000 # 10mb
+ # if image is larger, it will be resized
 max_image_width = 1280
 max_image_height = 8000
+
+ # where to keep proxied images
+[proxy_store]
+type = 'fs'
+ # if the image is larger, it will not be proxied and will give an error
+max_image_size = 10000000 # 10mb
+ # if image is larger, it will be resized
+max_image_width = 1280
+max_image_height = 8000
+ # max width and height can be set by user resize params
 max_resize_image_width = 2560
 max_resize_image_height = 1440
-# forcely convert images, one of: 'webp', 'jpg', 'png' (not recommended for photos), 'match' (do not convert at all)
+ # forcely convert images, one of: 'webp', 'jpg', 'png' (not recommended for photos), 'match' (do not convert at all)
 format = 'webp'
-# for GIFs: maximum resize-width and resize-height to strip animated GIFs, because they are avatars. Larger GIF images will not be resized, because resizing removes animation.
+ # for GIFs: maximum resize-width and resize-height to strip animated GIFs, because they are avatars. Larger GIF images will not be resized, because resizing removes animation.
 max_avatar_width = 200
 max_avatar_height = 200

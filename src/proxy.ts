@@ -11,23 +11,15 @@ import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
 import {imageBlacklist} from './blacklist'
-import {KoaContext, proxyStore} from './common'
+import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
 import {APIError} from './error'
-import {base58Dec, mimeMagic, readStream, storeExists, storeWrite} from './utils'
+import { safeParseInt, base58Dec, mimeMagic, readStream, storeExists, storeWrite } from './utils'
 
-const MAX_IMAGE_SIZE = Number.parseInt(config.get('max_image_size'))
+const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
-    throw new Error('Invalid max image size')
+    throw new Error('Invalid proxy_store.max_image_size')
 }
 const SERVICE_URL = new URL(config.get('service_url'))
-
-/** Image types allowed to be proxied and resized. */
-const AcceptedContentTypes = [
-    'image/gif',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-]
 
 interface NeedleResponse extends http.IncomingMessage {
     body: any
@@ -142,13 +134,6 @@ function getImageKey(origKey: string, options: ProxyOptions): string {
     return rv.join('_')
 }
 
-export function safeParseInt(value: any): number | undefined {
-    // If the number can't be parsed (like if it's `nil` or `undefined`), then
-    // `basicNumber` will be `NaN`.
-    const basicNumber = parseInt(value, 10)
-    return isNaN(basicNumber) ? undefined : basicNumber
-}
-
 export async function proxyHandler(ctx: KoaContext) {
     ctx.tag({handler: 'proxy'})
 
@@ -180,13 +165,22 @@ export async function proxyHandler(ctx: KoaContext) {
     let origStore: AbstractBlobStore
     let origKey: string
 
-    const urlHash = createHash('sha1')
-        .update(url.toString())
-        .digest()
-    origStore = proxyStore
-    origKey = 'U' + multihash.toB58String(
-        multihash.encode(urlHash, 'sha1')
-    )
+    const origIsUpload = SERVICE_URL.origin === url.origin && url.pathname[1] === 'D'
+    ctx.tag({ is_upload: origIsUpload, })
+    if (origIsUpload) {
+        // if we are proxying of own image use the uploadStore directly
+        // to avoid storing two copies of the original image
+        origStore = uploadStore
+        origKey = url.pathname.slice(1).split('/')[0]
+    } else {
+        const urlHash = createHash('sha1')
+            .update(url.toString())
+            .digest()
+        origStore = proxyStore
+        origKey = 'U' + multihash.toB58String(
+            multihash.encode(urlHash, 'sha1')
+        )
+    }
 
     const imageKey = getImageKey(origKey, options)
 
@@ -284,8 +278,8 @@ export async function proxyHandler(ctx: KoaContext) {
 
         APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
 
-        const maxWidth: number = safeParseInt(config.get('proxy_store.max_image_width')) || 1280
-        const maxHeight: number = safeParseInt(config.get('proxy_store.max_image_height')) || 8000
+        const maxWidth: number|undefined = safeParseInt(config.get('proxy_store.max_image_width'))
+        const maxHeight: number|undefined = safeParseInt(config.get('proxy_store.max_image_height'))
         const maxResizeWidth: number = safeParseInt(config.get('proxy_store.max_resize_image_width')) || 8000
         const maxResizeHeight: number = safeParseInt(config.get('proxy_store.max_resize_image_height')) || 8000
         let width: number | undefined = safeParseInt(options.width)
@@ -301,12 +295,12 @@ export async function proxyHandler(ctx: KoaContext) {
         if (width) {
           if (width > maxResizeWidth) { width = maxResizeWidth }
         } else {
-          if (metadata.width && metadata.width > maxWidth) { width = maxWidth }
+          if (maxWidth && metadata.width && metadata.width > maxWidth) { width = maxWidth }
         }
         if (height) {
           if (height > maxResizeHeight) { height = maxResizeHeight }
         } else {
-          if (metadata.height && metadata.height > maxHeight) { height = maxHeight }
+          if (maxHeight && metadata.height && metadata.height > maxHeight) { height = maxHeight }
         }
 
         switch (options.mode) {

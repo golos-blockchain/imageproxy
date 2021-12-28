@@ -43,4 +43,5 @@ COPY --from=build-stage /app/node_modules node_modules
 
 # run in production mode
 ENV NODE_ENV production
+ENV NODE_CONFIG_ENV production,blacklist
 CMD [ "node", "lib/app.js" ]

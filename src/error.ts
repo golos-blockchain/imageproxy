@@ -19,7 +19,7 @@ enum ErrorCode {
     NoSuchAccount,
     NotFound,
     PayloadTooLarge,
-    QoutaExceeded,
+    QuotaExceeded,
     UpstreamError,
 }
 
@@ -39,14 +39,14 @@ const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.NoSuchAccount, 404],
     [ErrorCode.NotFound, 404],
     [ErrorCode.PayloadTooLarge, 413],
-    [ErrorCode.QoutaExceeded, 429],
+    [ErrorCode.QuotaExceeded, 429],
     [ErrorCode.UpstreamError, 400],
 ])
 
 interface APIErrorOptions {
     cause?: Error,
     code?: ErrorCode,
-    info?: {[key: string]: string},
+    info?: {[key: string]: any},
     message?: string,
 }
 
@@ -84,7 +84,7 @@ export class APIError extends Error {
 
     public readonly cause?: Error
     public readonly code: ErrorCode
-    public readonly info?: {[key: string]: string}
+    public readonly info?: {[key: string]: any}
 
     constructor(options: APIErrorOptions) {
         const code = options.code || ErrorCode.InternalError

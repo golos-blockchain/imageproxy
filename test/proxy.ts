@@ -22,7 +22,7 @@ describe('proxy', function() {
     let serveImage = true
     const imageServer = http.createServer((req, res) => {
         if (serveImage) {
-            fs.createReadStream(path.resolve(__dirname, 'test.jpg')).pipe(res)
+            fs.createReadStream(path.resolve(__dirname, 'images/test6000x4000.jpg')).pipe(res)
         } else {
             res.writeHead(404)
             res.end()
@@ -34,7 +34,7 @@ describe('proxy', function() {
 
     it('should proxy', async function() {
         this.slow(1000)
-        const res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/test.jpg`)
+        const res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/test6000x4000.jpg`)
         const image = sharp(res.body)
         const meta = await image.metadata()
         assert.equal(meta.width, 1280)
@@ -45,7 +45,7 @@ describe('proxy', function() {
 
     it('should proxy and resize', async function() {
         this.slow(1000)
-        const res = await needle('get', `http://localhost:${ port }/100x0/http://localhost:${ port+1 }/test.jpg`)
+        const res = await needle('get', `http://localhost:${ port }/100x0/http://localhost:${ port+1 }/test6000x4000.jpg`)
         const image = sharp(res.body)
         const meta = await image.metadata()
         assert.equal(meta.width, 100)
@@ -56,7 +56,7 @@ describe('proxy', function() {
 
     it('should proxy stored image when source is gone', async function() {
         serveImage = false
-        const res = await needle('get', `http://localhost:${ port }/100x0/http://localhost:${ port+1 }/test.jpg`)
+        const res = await needle('get', `http://localhost:${ port }/100x0/http://localhost:${ port+1 }/test6000x4000.jpg`)
         const image = sharp(res.body)
         const meta = await image.metadata()
         assert.equal(meta.width, 100)
@@ -68,7 +68,7 @@ describe('proxy', function() {
     it('should proxy using new api', async function() {
         this.slow(1000)
         serveImage = false
-        const imageUrl = base58Enc(`http://localhost:${ port+1 }/test.jpg`)
+        const imageUrl = base58Enc(`http://localhost:${ port+1 }/test6000x4000.jpg`)
         const res = await needle('get', `http://localhost:${ port }/p/${ imageUrl }?width=100&height=100&format=webp`)
         const image = sharp(res.body)
         const meta = await image.metadata()
@@ -81,7 +81,7 @@ describe('proxy', function() {
     it('should resolve double proxied images', async function() {
         this.slow(1000)
         serveImage = false
-        const imageUrl = base58Enc(`http://localhost:${ port+1 }/test.jpg`)
+        const imageUrl = base58Enc(`http://localhost:${ port+1 }/test6000x4000.jpg`)
         const url1 = `http://localhost:${ port }/p/${ imageUrl }?width=100&height=100`
         const url2 = `http://localhost:${ port }/p/${ base58Enc(url1) }?width=200`
         const res = await needle('get', url2)

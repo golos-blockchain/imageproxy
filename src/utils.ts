@@ -31,6 +31,13 @@ export function parseBool(input: any): boolean {
     }
 }
 
+export function safeParseInt(value: any): number | undefined {
+    // If the number can't be parsed (like if it's `nil` or `undefined`), then
+    // `basicNumber` will be `NaN`.
+    const basicNumber = parseInt(value, 10)
+    return isNaN(basicNumber) ? undefined : basicNumber
+}
+
 /** Convert CamelCase to snake_case. */
 export function camelToSnake(value: string) {
     return value
@@ -92,4 +99,8 @@ export function base58Enc(value: string): string {
 /** Decode utf8 string from Base58. */
 export function base58Dec(value: string): string {
     return multihash.fromB58String(value).toString('utf8')
+}
+
+export function unixMsecToString(msec: number) {
+    return new Date(msec).toISOString().split('.')[0];
 }

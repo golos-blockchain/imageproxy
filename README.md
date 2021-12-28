@@ -8,26 +8,11 @@ High-speed, secure image proxying service for GOLOS Blockchain.
 Deployment
 ----------
 
-```
-docker build -t golosblockchain/imageproxy .
-
-docker run -d -p 8800:8800 --name golos-imageproxy golosblockchain/imageproxy
-```
-
-Docker-Compose
-----------
+Please install [Docker](https://docs.docker.com/engine/install/ubuntu/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
 ```
-version: "3"
-services:
-
-  datastore:
-    image: golosblockchain/imageproxy:latest
-    volumes:
-      - ./cache:/app/cache
-      - ./production.toml:/app/config/production.toml
-    ports:
-      - "8800:8800"
+docker-compose build
+docker-compose up
 ```
 
 Developing
@@ -45,7 +30,9 @@ npm install --global yarn
 sudo apt-get install build-essential
 ```
 
-Run:
+Tarantool instance can started by running docker-compose with `docker-compose up db`, and with open 49003 port.
+
+To run the server:
 
 ```
 make devserver
@@ -55,6 +42,12 @@ This will pull in all dependencies and spin up a hot-reloading development serve
 
 Run `make lint` to run the autolinter, `make test` to run the unit tests.
 
+Use `grep='upload gif' make test` to run only specific tests whose testcase names contain 'upload gif' string.
+
+To see contents of Tarantool, use:
+```
+docker-compose exec db tarantoolctl connect 49003
+```
 
 Configuration
 -------------

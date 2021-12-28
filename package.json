@@ -14,8 +14,9 @@
     "aws-sdk": "^2.188.0",
     "bunyan": "^2.0.2",
     "busboy": "^0.2.14",
-    "config": "^1.29.4",
+    "config": "^3.3.6",
     "fs-blob-store": "^6.0.0",
+    "golos-lib-js": "^0.9.23",
     "koa": "^2.3.0",
     "koa-router": "^7.4.0",
     "mmmagic": "^0.5.0",
@@ -23,6 +24,7 @@
     "needle": "^2.1.1",
     "sharp": "^0.29.3",
     "stream-head": "^1.1.0",
+    "tarantool-driver": "^3.0.6",
     "toml": "^2.3.3"
   },
   "devDependencies": {

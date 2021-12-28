@@ -1,0 +1,26 @@
+version: "3"
+services:
+
+  web:
+    image: golosblockchain/imageproxy:latest
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./cache:/app/cache
+      - ./production.toml:/app/config/production.toml
+      - ./blacklist.toml:/app/config/blacklist.toml
+    depends_on:
+      - db
+    ports:
+      - "8800:8800"
+
+  db:
+    image: golosblockchain/imageproxy:tarantool
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile-db
+    volumes:
+      - ./tarantool:/var/lib/tarantool

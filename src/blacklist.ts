@@ -1,9 +1,10 @@
-/** Proxying blacklist. In the future this will live on-chain. */
+/** Upload and proxying blacklist. In the future this will live on-chain. */
 
 interface Blacklist<T> {
     includes: (item: T) => boolean
 }
 
+// For proxying
 /* tslint:disable:max-line-length */
 export const imageBlacklist: Blacklist<string> = [
     'https://img.esteem.ws/b8r4fg7p4n.jpg',
@@ -16,4 +17,4 @@ export const imageBlacklist: Blacklist<string> = [
     'http://image.ibb.co/minGCF/aa_lenie_urbina_avielle_richman_meme.png',
     'https://steemitimages.com/DQmV858o66qa9wSBQCD6nu7xv45UVsvcNzsQpu9K6FrV1c2/19.jpg',
     'https://images.hive.blog/DQmNvk94uq6VAgS3t4zAeQCezGCToqGNsUkv4fkPo4NwVDm/image.png'
-  ]
+]

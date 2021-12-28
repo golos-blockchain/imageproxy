@@ -2,6 +2,7 @@ import * as cors from '@koa/cors'
 import * as Bunyan from 'bunyan'
 import * as cluster from 'cluster'
 import * as config from 'config'
+import * as golos from 'golos-lib-js'
 import * as http from 'http'
 import * as Koa from 'koa'
 import * as os from 'os'
@@ -12,6 +13,13 @@ import {APIError, errorMiddleware} from './error'
 import {logger, loggerMiddleware} from './logger'
 import {routes} from './routes'
 import {parseBool} from './utils'
+
+if (config.has('node_url')) {
+    golos.config.set('websocket', config.get('node_url'))
+}
+if (config.has('chain_id')) {
+    golos.config.set('chain_id', config.get('chain_id'))
+}
 
 export const app = new Koa()
 export const version = require('./version')

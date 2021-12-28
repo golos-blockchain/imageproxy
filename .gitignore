@@ -4,3 +4,4 @@ reports/
 .nyc_output/
 config/local*
 cache/
+tarantool/
