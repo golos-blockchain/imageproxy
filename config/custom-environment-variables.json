@@ -1,15 +1,21 @@
 {
-  "port": "PORT",
-  "proxy": "IS_PROXIED",
-  "num_workers": "NUM_WORKERS",
-  "log_level": "LOG_LEVEL",
-  "log_output": "LOG_OUTPUT",
-  "service_url": "SERVICE_URL",
+  "port": "SDC_PORT",
+  "proxy": "SDC_IS_PROXIED",
+  "num_workers": "SDC_NUM_WORKERS",
+  "log_level": "SDC_LOG_LEVEL",
+  "log_output": "SDC_LOG_OUTPUT",
+  "service_url": "SDC_SERVICE_URL",
+  "tarantool": {
+    "host": "SDC_TARANTOOL_HOSTNAME",
+    "port": "SDC_TARANTOOL_PORT",
+    "username": "SDC_TARANTOOL_USERNAME",
+    "password": "SDC_TARANTOOL_PASSWORD"
+  },
   "proxy_store": {
-    "type": "PROXY_STORAGE_TYPE",
-    "max_image_width": "PROXY_MAX_IMAGE_WIDTH",
-    "max_image_height": "PROXY_MAX_IMAGE_HEIGHT",
-    "max_resize_image_width": "PROXY_MAX_RESIZE_IMAGE_WIDTH",
-    "max_resize_image_height": "PROXY_MAX_RESIZE_IMAGE_HEIGHT"
+    "type": "SDC_PROXY_STORAGE_TYPE",
+    "max_image_width": "SDC_PROXY_MAX_IMAGE_WIDTH",
+    "max_image_height": "SDC_PROXY_MAX_IMAGE_HEIGHT",
+    "max_resize_image_width": "SDC_PROXY_MAX_RESIZE_IMAGE_WIDTH",
+    "max_resize_image_height": "SDC_PROXY_MAX_RESIZE_IMAGE_HEIGHT"
   }
 }
