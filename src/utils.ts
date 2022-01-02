@@ -102,5 +102,5 @@ export function base58Dec(value: string): string {
 }
 
 export function unixMsecToString(msec: number) {
-    return new Date(msec).toISOString().split('.')[0];
+    return new Date(msec).toISOString().split('.')[0]
 }

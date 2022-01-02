@@ -4,8 +4,8 @@ import * as Router from 'koa-router'
 
 import {KoaContext} from './common'
 import {legacyProxyHandler} from './legacy-proxy'
-import {proxyHandler} from './proxy'
 import { profileHandler } from './profile'
+import {proxyHandler} from './proxy'
 import { getGlobals } from './ratelimit'
 import { serveHandler } from './serve'
 import { uploadHandler } from './upload'
@@ -17,7 +17,7 @@ const router = new Router()
 async function healthcheck(ctx: KoaContext) {
     const ok = true
     const date = new Date()
-    let ratelimit: any = {
+    const ratelimit: any = {
         upload: getGlobals()
     }
     ctx.set('Cache-Control', 'no-cache')

@@ -11,9 +11,9 @@ import { URL } from 'url'
 
 import { AcceptedContentTypes, KoaContext, uploadStore } from './common'
 import { APIError, } from './error'
-import { UPLOAD_LIMITS, getRateLimit, saveRateLimit } from './ratelimit'
+import { getRateLimit, saveRateLimit, UPLOAD_LIMITS } from './ratelimit'
 import Tarantool from './tarantool'
-import { mimeMagic, safeParseInt, readStream, storeExists, storeWrite } from './utils'
+import { mimeMagic, readStream, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('upload_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
@@ -88,7 +88,7 @@ export async function uploadHandler(ctx: KoaContext) {
 
     APIError.assert(!ACCOUNT_BLACKLIST.includes(account.name), APIError.Code.Blacklisted)
 
-    let limit = await getRateLimit(ctx, account.name)
+    const limit = await getRateLimit(ctx, account.name)
 
     APIError.assert(!limit.exceeded, {
         code: APIError.Code.QuotaExceeded,
@@ -148,9 +148,9 @@ export async function uploadHandler(ctx: KoaContext) {
 
     try {
         await Tarantool.instance('tarantool')
-        .call('record_upload', account.name, key, Date.now());
+            .call('record_upload', account.name, key, Date.now())
     } catch (err) {
-        ctx.log.error('Cannot record upload for', account.name, key);
+        ctx.log.error('Cannot record upload for', account.name, key)
     }
 
     ctx.log.info({

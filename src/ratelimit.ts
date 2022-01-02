@@ -7,17 +7,21 @@ import Tarantool from './tarantool'
 export const UPLOAD_LIMITS = initUploadLimits(config.get('upload_limits') as any)
 
 function initUploadLimits(limits: any) {
-    let res = {...limits}
-    if (res.duration > 1576800)
-        throw new Error('upload_limits.duration cannot be greater than 1576800 (3 years)');
-    if (res.max <= 0)
-        throw new Error('upload_limits.max should be positive');
-    if (res.max > res.duration)
-        throw new Error('upload_limits.max cannot be greater than upload_limits.duration');
+    const res = {...limits}
+    if (res.duration > 1576800) {
+        throw new Error('upload_limits.duration cannot be greater than 1576800 (3 years)')
+    }
+    if (res.max <= 0) {
+        throw new Error('upload_limits.max should be positive')
+    }
+    if (res.max > res.duration) {
+        throw new Error('upload_limits.max cannot be greater than upload_limits.duration')
+    }
     const consumption = res.duration / res.max
     const floor = Math.floor(consumption)
-    if (floor !== consumption)
+    if (floor !== consumption) {
         res.duration = (floor + 1) * res.max
+    }
     return res
 }
 
@@ -29,30 +33,8 @@ export function getGlobals() {
 }
 
 export class RateLimit {
-    // db data
-    account = '';
-    capacity = UPLOAD_LIMITS.duration
-    last_action = 0
-    // custom
-    retry_after_minutes = 0
-    exceeded = false
-    remaining = 0
-    consumptionPer1 = 0
-    elapsedMinutes = 0
-    now = 0
-
-    private calcRemaining() {
-        if (this.capacity < this.consumptionPer1) {
-            this.exceeded = true
-            this.retry_after_minutes = this.consumptionPer1 - this.elapsedMinutes
-            if (this.retry_after_minutes < 0)
-                this.retry_after_minutes = UPLOAD_LIMITS.duration
-        }
-        this.remaining = Math.floor(this.capacity / this.consumptionPer1)
-    }
-
-    static fromDB(record: any, account: string) {
-        let limit = new RateLimit()
+    public static fromDB(record: any, account: string) {
+        const limit = new RateLimit()
         limit.account = account
 
         if (record) {
@@ -69,7 +51,7 @@ export class RateLimit {
 
         limit.consumptionPer1 = Math.floor(UPLOAD_LIMITS.duration / UPLOAD_LIMITS.max)
 
-        limit.now = Math.floor(Date.now() / (60*1000)) + 100500
+        limit.now = Math.floor(Date.now() / (60 * 1000)) + 100500
         limit.elapsedMinutes = limit.now - limit.last_action
         const regeneratedCapacity = Math.min(
             UPLOAD_LIMITS.duration,
@@ -83,15 +65,29 @@ export class RateLimit {
         return limit
     }
 
-    consume() { 
+    // db data
+    public account = ''
+    public capacity = UPLOAD_LIMITS.duration
+    /* tslint:disable-next-line */
+    public last_action = 0
+    // custom
+    /* tslint:disable-next-line */
+    public retry_after_minutes = 0
+    public exceeded = false
+    public remaining = 0
+    public consumptionPer1 = 0
+    public elapsedMinutes = 0
+    public now = 0
+
+    public consume() {
         this.capacity = Math.max(this.capacity - this.consumptionPer1, 0)
         this.last_action = this.now
 
         this.calcRemaining()
     }
 
-    toAPI() {
-        let obj: any = {
+    public toAPI() {
+        const obj: any = {
             uploads_remaining: this.remaining,
         }
         if (this.exceeded) {
@@ -102,6 +98,17 @@ export class RateLimit {
         obj.last_action_unix_minutes = this.last_action
         obj.globals = getGlobals()
         return obj
+    }
+
+    private calcRemaining() {
+        if (this.capacity < this.consumptionPer1) {
+            this.exceeded = true
+            this.retry_after_minutes = this.consumptionPer1 - this.elapsedMinutes
+            if (this.retry_after_minutes < 0) {
+                this.retry_after_minutes = UPLOAD_LIMITS.duration
+            }
+        }
+        this.remaining = Math.floor(this.capacity / this.consumptionPer1)
     }
 }
 

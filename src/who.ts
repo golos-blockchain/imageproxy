@@ -13,7 +13,9 @@ export async function whoHandler(ctx: KoaContext) {
     const { hash, } = ctx.params
     let { from, limit, detailed, } = ctx.query
 
-    if (limit) limit = parseInt(limit)
+    if (limit) {
+        limit = parseInt(limit)
+    }
 
     APIError.assert(!limit || limit < 50, 'limit cannot be greater than 50')
 
@@ -25,16 +27,16 @@ export async function whoHandler(ctx: KoaContext) {
     let accounts: any = []
     try {
         accounts = await Tarantool.instance('tarantool')
-        .call('who_uploaded', hash, from, limit+1, detailed)
-        accounts = accounts[0] || [];
+            .call('who_uploaded', hash, from, limit + 1, detailed)
+        accounts = accounts[0] || []
     } catch (err) {
         ctx.log.error('Cannot get who uploaded', hash, err)
         throw err
     }
 
-    let data: any = { accounts, }
-    if (accounts.length === limit+1) {
-        let nextAcc = accounts[limit].account || accounts[limit]
+    const data: any = { accounts, }
+    if (accounts.length === limit + 1) {
+        const nextAcc = accounts[limit].account || accounts[limit]
         let more = ctx.request.origin + '/who/' + hash + '?'
         if (detailed) {
             more += 'detailed=1&'
@@ -47,7 +49,7 @@ export async function whoHandler(ctx: KoaContext) {
         accounts.pop()
     }
     if (detailed) {
-        for (let i in accounts) {
+        for (let i = 0; i < accounts.length; ++i) {
             accounts[i] = {
                 account: accounts[i].account,
                 uploaded: unixMsecToString(accounts[i].uploaded_msec),

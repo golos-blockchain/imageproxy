@@ -1,8 +1,8 @@
 
 import { KoaContext, } from './common'
 import { APIError, } from './error'
-import Tarantool from './tarantool'
 import { getRateLimit } from './ratelimit'
+import Tarantool from './tarantool'
 import { unixMsecToString } from './utils'
 
 export async function profileHandler(ctx: KoaContext) {
@@ -14,7 +14,9 @@ export async function profileHandler(ctx: KoaContext) {
     const { profile, } = ctx.params
     let { from, limit, detailed, } = ctx.query
 
-    if (limit) limit = parseInt(limit)
+    if (limit) {
+        limit = parseInt(limit)
+    }
 
     APIError.assert(!limit || limit < 50, 'limit cannot be greater than 50')
 
@@ -26,16 +28,16 @@ export async function profileHandler(ctx: KoaContext) {
     let uploads: any = []
     try {
         uploads = await Tarantool.instance('tarantool')
-        .call('their_uploads', profile, from, limit+1, detailed)
-        uploads = uploads[0] || [];
+            .call('their_uploads', profile, from, limit + 1, detailed)
+        uploads = uploads[0] || []
     } catch (err) {
         ctx.log.error('Cannot get who uploaded', profile, err)
         throw err
     }
 
-    let data: any = { uploads, }
-    if (uploads.length === limit+1) {
-        let nextKey = uploads[limit].upload_key || uploads[limit]
+    const data: any = { uploads, }
+    if (uploads.length === limit + 1) {
+        const nextKey = uploads[limit].upload_key || uploads[limit]
         let more = ctx.request.origin + '/@' + profile + '?'
         if (detailed) {
             more += 'detailed=1&'
@@ -47,7 +49,7 @@ export async function profileHandler(ctx: KoaContext) {
         }
         uploads.pop()
     }
-    for (let i in uploads) {
+    for (let i = 0; i < uploads.length; ++i) {
         const prefix = ctx.request.origin + '/'
         if (detailed) {
             uploads[i] = {
@@ -56,12 +58,11 @@ export async function profileHandler(ctx: KoaContext) {
                 uploaded: unixMsecToString(uploads[i].uploaded_msec),
                 uploaded_msec: uploads[i].uploaded_msec,
             }
-        }
-        else {
+        } else {
             uploads[i] = prefix + uploads[i]
         }
     }
-    let ratelimit = await getRateLimit(ctx, profile)
+    const ratelimit = await getRateLimit(ctx, profile)
     data.ratelimit = ratelimit.toAPI()
     ctx.body = data
 }

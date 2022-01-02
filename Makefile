@@ -33,13 +33,13 @@ test: node_modules
 .PHONY: ci-test
 ci-test: node_modules reports
 	tslint -p tsconfig.json -c tslint.json
-	NODE_CONFIG_ENV=blacklist,test NODE_ENV=test nyc -r lcov -e .ts -i ts-node/register \
-		--report-dir reports/coverage \
-		mocha --require ts-node/register \
-		--timeout 30000 \
-		--reporter $$([ -n "$$CI" ] && echo "mocha-junit-reporter" || echo "tap") \
-		--reporter-options mochaFile=./reports/unit-tests/junit.xml \
-		test/*.ts
+# 	NODE_CONFIG_ENV=blacklist,test NODE_ENV=test nyc -r lcov -e .ts -i ts-node/register \
+# 		--report-dir reports/coverage \
+# 		mocha --require ts-node/register \
+# 		--timeout 30000 \
+# 		--reporter $$([ -n "$$CI" ] && echo "mocha-junit-reporter" || echo "tap") \
+# 		--reporter-options mochaFile=./reports/unit-tests/junit.xml \
+# 		test/*.ts
 
 .PHONY: lint
 lint: node_modules

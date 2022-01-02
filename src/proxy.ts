@@ -13,7 +13,7 @@ import {URL} from 'url'
 import {imageBlacklist} from './blacklist'
 import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
 import {APIError} from './error'
-import { safeParseInt, base58Dec, mimeMagic, readStream, storeExists, storeWrite } from './utils'
+import { base58Dec, mimeMagic, readStream, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
