@@ -24,7 +24,7 @@ let ACCOUNT_BLACKLIST: string[]
 try {
     ACCOUNT_BLACKLIST = config.get('account_blacklist')
 } catch (err) {
-    throw new Error('No account_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.toml')
+    throw new Error('No account_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.json')
 }
 
 /**

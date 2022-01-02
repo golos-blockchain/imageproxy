@@ -52,9 +52,9 @@ docker-compose exec db tarantoolctl connect 49003
 Configuration
 -------------
 
-Defaults are in <./config/default.toml> and can be overridden by env vars as defined in <./config/custom-environment-variables.toml>
+Defaults are in <./config/default.json> and can be overridden by env vars as defined in <./config/custom-environment-variables.json>
 
-Load order is: env vars > `config/$NODE_ENV.toml` > `config/default.toml`
+Load order is: env vars > `config/$NODE_ENV.json` > `config/default.json`
 
 See the `config` module docs for more details.
 

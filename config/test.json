@@ -1,0 +1,11 @@
+{
+  "log_level": "error",
+  "service_url": "http://localhost:63205",
+
+   // upload rate and reputation limits
+  "upload_limits": {
+    "duration": 1111, // in minutes
+    "max": 30, // max requests within duration
+    "reputation": 10 // minimum reputation needed for upload
+  }
+}

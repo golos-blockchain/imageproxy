@@ -9,8 +9,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./cache:/app/cache
-      - ./production.toml:/app/config/production.toml
-      - ./blacklist.toml:/app/config/blacklist.toml
+      - ./production.json:/app/config/production.json
+      - ./blacklist.json:/app/config/blacklist.json
     depends_on:
       - db
     ports:
