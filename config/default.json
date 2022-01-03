@@ -45,9 +45,9 @@
     "type": "fs",
      // if the image is larger, it will not be uploaded and will give an error
     "max_image_size": 10000000, // 10mb
-     // if image is larger, it will be resized
-    "max_image_width": 1280,
-    "max_image_height": 8000
+     // if image is larger, it will be resized before saving original to store
+    "max_store_image_width": 2560,
+    "max_store_image_height": 3640
   },
 
   // where to keep proxied images
@@ -55,12 +55,12 @@
     "type": "fs",
     // if the image is larger, it will not be proxied and will give an error
     "max_image_size": 10000000, // 10mb
-    // if image is larger, it will be resized
+    // if image is larger, it will be resized before saving original to store
+    "max_store_image_width": 2560,
+    "max_store_image_height": 1440,
+    // max width and height to show image if no user resize params
     "max_image_width": 1280,
     "max_image_height": 8000,
-    // max width and height can be set by user resize params
-    "max_resize_image_width": 2560,
-    "max_resize_image_height": 1440,
     // forcely convert images, one of: "webp", "jpg", "png" (not recommended for photos)
     // also it can be "match" (do not convert), but do not use it, because TIFF files are not supported by browsers without conversion
     "format": "webp",

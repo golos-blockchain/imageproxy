@@ -11,11 +11,18 @@
     "username": "SDC_TARANTOOL_USERNAME",
     "password": "SDC_TARANTOOL_PASSWORD"
   },
+  "upload_store": {
+    "type": "SDC_UPLOAD_STORAGE_TYPE",
+    "max_image_size": "SDC_UPLOAD_MAX_IMAGE_SIZE",
+    "max_store_image_width": "SDC_MAX_STORE_IMAGE_WIDTH",
+    "max_store_image_height": "SDC_MAX_STORE_IMAGE_HEIGHT"
+  },
   "proxy_store": {
     "type": "SDC_PROXY_STORAGE_TYPE",
+    "max_image_size": "SDC_PROXY_MAX_IMAGE_SIZE",
+    "max_store_image_width": "SDC_MAX_STORE_IMAGE_WIDTH",
+    "max_store_image_height": "SDC_MAX_STORE_IMAGE_HEIGHT",
     "max_image_width": "SDC_PROXY_MAX_IMAGE_WIDTH",
-    "max_image_height": "SDC_PROXY_MAX_IMAGE_HEIGHT",
-    "max_resize_image_width": "SDC_PROXY_MAX_RESIZE_IMAGE_WIDTH",
-    "max_resize_image_height": "SDC_PROXY_MAX_RESIZE_IMAGE_HEIGHT"
+    "max_image_height": "SDC_PROXY_MAX_IMAGE_HEIGHT"
   }
 }

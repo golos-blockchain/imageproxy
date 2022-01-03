@@ -86,13 +86,13 @@ export async function uploadImage({
 }
 
 async function checkImage(url: string, format: string,
-    width?: number, height?: number) {
+    width?: number, height?: number, space = 'srgb') {
     var res = await needle('get', url);
     checkNoError(res);
     var image = sharp(res.body);
     var meta = await image.metadata();
     assert.equal(meta.format, format);
-    assert.equal(meta.space, 'srgb');
+    assert.equal(meta.space, space);
     if (width) assert.equal(meta.width, width, 'width');
     if (height) assert.equal(meta.height, height, 'height');
 }
@@ -116,14 +116,14 @@ describe('upload', function() {
         })
 
         var { url, } = body
-        await checkImage(url, 'jpeg', 1280, 853);
+        await checkImage(url, 'jpeg', 2560, 1707);
 
         var [ key, fname, ] = url.split('/').slice(-2)
         await checkImage(`:${ port }/${ key }/bla.bla`,
-            'jpeg', 1280, 853)
+            'jpeg', 2560, 1707)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 853)
+            'webp', 1280, 854)
     })
 
     it('should upload gif image', async function() {
@@ -172,10 +172,10 @@ describe('upload', function() {
         })
 
         var { url, } = body
-        await checkImage(url, 'png', 1280, 853)
+        await checkImage(url, 'png', 2560, 1707)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 853)
+            'webp', 1280, 854)
     })
 
     it('should upload webp image', async function() {
@@ -198,10 +198,10 @@ describe('upload', function() {
         })
 
         var { url, } = body
-        await checkImage(url, 'webp', 1280, 853);
+        await checkImage(url, 'webp', 2560, 1707);
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 853)
+            'webp', 1280, 854)
     })
 
     it('should upload tiff image', async function() {
@@ -224,7 +224,7 @@ describe('upload', function() {
         })
 
         var { url, } = body
-        await checkImage(url, 'tiff', 1280, 1762);
+        await checkImage(url, 'tiff', 2550, 3510, 'b-w');
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
             'webp', 1280, 1762)
@@ -251,10 +251,10 @@ describe('upload', function() {
 
         var { url, } = body
         // it will be png because of resize
-        await checkImage(url, 'png', 1280, 853)
+        await checkImage(url, 'png', 2560, 1707)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 853)
+            'webp', 1280, 854)
     })
 
     it('should upload image with active key', async function() {

@@ -13,7 +13,7 @@ import {URL} from 'url'
 import {imageBlacklist} from './blacklist'
 import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
 import {APIError} from './error'
-import { base58Dec, mimeMagic, readStream, safeParseInt, storeExists, storeWrite } from './utils'
+import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
@@ -203,7 +203,11 @@ export async function proxyHandler(ctx: KoaContext) {
         return
     }
 
+    const maxStoreWidth: number|undefined = safeParseInt(config.get('proxy_store.max_store_image_width'))
+    const maxStoreHeight: number|undefined = safeParseInt(config.get('proxy_store.max_store_image_height'))
+
     // check if we have the original
+    let image: Sharp.Sharp|undefined
     let origData: Buffer
     let contentType: string
     if (await storeExists(origStore, origKey)) {
@@ -241,6 +245,15 @@ export async function proxyHandler(ctx: KoaContext) {
 
         origData = res.body
 
+        image = Sharp(origData)
+
+        const resized = await resizeIfTooLarge(image, maxStoreWidth, maxStoreHeight)
+
+        if (resized) {
+            image = resized
+            origData = await resized.toBuffer()
+        }
+
         ctx.log.debug('storing original %s', origKey)
         await storeWrite(origStore, origKey, origData)
     }
@@ -258,7 +271,10 @@ export async function proxyHandler(ctx: KoaContext) {
         // this is needed since resizing gifs (and conversion to webp, too) removes animation
         rv = origData
     } else {
-        const image = Sharp(origData).jpeg({
+        if (!image) {
+            image = Sharp(origData)
+        }
+        image = image.jpeg({
             quality: 85,
             force: false,
         }).png({
@@ -278,29 +294,20 @@ export async function proxyHandler(ctx: KoaContext) {
 
         APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
 
-        const maxWidth: number|undefined = safeParseInt(config.get('proxy_store.max_image_width'))
-        const maxHeight: number|undefined = safeParseInt(config.get('proxy_store.max_image_height'))
-        const maxResizeWidth: number = safeParseInt(config.get('proxy_store.max_resize_image_width')) || 8000
-        const maxResizeHeight: number = safeParseInt(config.get('proxy_store.max_resize_image_height')) || 8000
+        const defWidth: number|undefined = safeParseInt(config.get('proxy_store.max_image_width'))
+        const defHeight: number|undefined = safeParseInt(config.get('proxy_store.max_image_height'))
         let width: number | undefined = safeParseInt(options.width)
         let height: number | undefined = safeParseInt(options.height)
 
-        // If no width and height are provided, it will use the default image
-        // width and height, but cap it to the config-provided max image width
-        // and height. This is so we can save on bandwidth for the default case.
-        //
-        // If width and height are provided, it will use the provided width and
-        // height. This is so clients who need a higher-res image can still get
-        // one.
         if (width) {
-          if (width > maxResizeWidth) { width = maxResizeWidth }
+          if (maxStoreWidth && width > maxStoreWidth) { width = maxStoreWidth }
         } else {
-          if (maxWidth && metadata.width && metadata.width > maxWidth) { width = maxWidth }
+          if (defWidth && metadata.width && metadata.width > defWidth) { width = defWidth }
         }
         if (height) {
-          if (height > maxResizeHeight) { height = maxResizeHeight }
+          if (maxStoreHeight && height > maxStoreHeight) { height = maxStoreHeight }
         } else {
-          if (maxHeight && metadata.height && metadata.height > maxHeight) { height = maxHeight }
+          if (defHeight && metadata.height && metadata.height > defHeight) { height = defHeight }
         }
 
         switch (options.mode) {
@@ -308,8 +315,8 @@ export async function proxyHandler(ctx: KoaContext) {
                 image.rotate().resize(width, height, {fit: 'cover'})
                 break
             case ScalingMode.Fit:
-                if (!width) { width = maxWidth }
-                if (!height) { height = maxHeight }
+                if (!width) { width = defWidth }
+                if (!height) { height = defHeight }
 
                 image.rotate().resize(width, height, { fit: 'inside', withoutEnlargement: true })
                 break

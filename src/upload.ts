@@ -13,7 +13,7 @@ import { AcceptedContentTypes, KoaContext, uploadStore } from './common'
 import { APIError, } from './error'
 import { getRateLimit, saveRateLimit, UPLOAD_LIMITS } from './ratelimit'
 import Tarantool from './tarantool'
-import { mimeMagic, readStream, safeParseInt, storeExists, storeWrite } from './utils'
+import { mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('upload_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
@@ -117,30 +117,16 @@ export async function uploadHandler(ctx: KoaContext) {
 
         const image = Sharp(data)
 
-        let metadata: Sharp.Metadata
-        try {
-            metadata = await image.metadata()
-        } catch (cause) {
-            throw new APIError({cause, code: APIError.Code.InvalidImage})
+        const maxWidth: number|undefined = safeParseInt(config.get('upload_store.max_store_image_width'))
+        const maxHeight: number|undefined = safeParseInt(config.get('upload_store.max_store_image_height'))
+
+        const resized = await resizeIfTooLarge(image, maxWidth, maxHeight)
+
+        let buf = data
+        if (resized) {
+            buf = await resized.toBuffer()
         }
 
-        APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
-
-        const maxWidth: number|undefined = safeParseInt(config.get('upload_store.max_image_width'))
-        const maxHeight: number|undefined = safeParseInt(config.get('upload_store.max_image_height'))
-
-        let width: any
-        if (maxWidth && metadata.width && metadata.width > maxWidth) { width = maxWidth }
-        let height: any
-        if (maxHeight && metadata.height && metadata.height > maxHeight) { height = maxHeight }
-
-        let buf: Buffer
-        if (width || height) {
-            image.rotate().resize(width, height, {fit: 'cover'})
-            buf = await image.toBuffer()
-        } else {
-            buf = data
-        }
         await storeWrite(uploadStore, key, buf)
     } else {
         ctx.log.debug('key %s already exists in store', key)
