@@ -51,7 +51,7 @@ export async function uploadImage({
         },
     }
     let signature = (key && key.posting) ? signatures.posting : signatures.active;
-    var url = `:${port}/${acc}/${signature}`;
+    var url = `:${port}/@${acc}/${signature}`;
     let { response, body } = await new Promise<any>((resolve, reject) => {
         needle.post(url, payload, {multipart: true}, (error, response, body) => {
             if (error) {
