@@ -304,10 +304,10 @@
     "@types/express-serve-static-core" "*"
     "@types/mime" "*"
 
-"@types/sharp@^0.21.0":
-  version "0.21.3"
-  resolved "https://registry.yarnpkg.com/@types/sharp/-/sharp-0.21.3.tgz#82f89f99536557e397c0c46f5ea50dcc1529fe35"
-  integrity sha512-wgCw1OO/iQ3w13WVRhx1fHoo5NDHq+444wqTnKcAWA9YMj1a9stoLlfLjW1mJJkFG1aRjeKd9KYhiYOJ3H7qEg==
+"@types/sharp@^0.29.5":
+  version "0.29.5"
+  resolved "https://registry.yarnpkg.com/@types/sharp/-/sharp-0.29.5.tgz#9c7032d30d138ad16dde6326beaff2af757b91b3"
+  integrity sha512-3TC+S3H5RwnJmLYMHrcdfNjz/CaApKmujjY9b6PU/pE6n0qfooi99YqXGWoW8frU9EWYj/XTI35Pzxa+ThAZ5Q==
   dependencies:
     "@types/node" "*"
 

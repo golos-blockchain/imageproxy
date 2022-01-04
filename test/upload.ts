@@ -3,12 +3,11 @@ import * as assert from 'assert'
 import * as golos from 'golos-lib-js'
 import * as http from 'http'
 import * as needle from 'needle'
-import * as sharp from 'sharp'
 import { URL, } from 'url'
 
 import { app } from './../src/app'
 import { ACC, ACC_POSTING, ACC_ACTIVE,
-    readFile, checkError, checkNoError, clearProfile } from './common'
+    readFile, checkError, checkNoError, clearProfile, checkImage } from './common'
 
 const port = 63205;
 
@@ -83,18 +82,6 @@ export async function uploadImage({
         assert(!checkKey);
     }
     return { response, body, data }
-}
-
-async function checkImage(url: string, format: string,
-    width?: number, height?: number, space = 'srgb') {
-    var res = await needle('get', url);
-    checkNoError(res);
-    var image = sharp(res.body);
-    var meta = await image.metadata();
-    assert.equal(meta.format, format);
-    assert.equal(meta.space, space);
-    if (width) assert.equal(meta.width, width, 'width');
-    if (height) assert.equal(meta.height, height, 'height');
 }
 
 describe('upload', function() {

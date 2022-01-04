@@ -2,6 +2,7 @@ import * as assert from 'assert'
 import * as fs from 'fs'
 import * as needle from 'needle'
 import * as path from 'path'
+import * as sharp from 'sharp'
 
 import Tarantool from './../src/tarantool'
 
@@ -92,4 +93,17 @@ export async function clearProfile(port: number, acc: string) {
     var profile = await getProfile(port, acc)
     var { uploads, more, } = profile
     assert.deepEqual(uploads, [])
+}
+
+export async function checkImage(url: string, format: string,
+    width?: number, height?: number, space = 'srgb', gifPages?: number) {
+    var res = await needle('get', url);
+    checkNoError(res);
+    var image = sharp(res.body);
+    var meta = await image.metadata();
+    assert.equal(meta.format, format);
+    assert.equal(meta.space, space);
+    if (width) assert.equal(meta.width, width, 'width');
+    if (height) assert.equal(meta.height, height, 'height');
+    if (gifPages) assert.equal(meta.pages, gifPages)
 }
