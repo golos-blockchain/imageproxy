@@ -6,7 +6,7 @@ import * as needle from 'needle'
 import { URL, } from 'url'
 
 import { app } from './../src/app'
-import { ACC, ACC_POSTING, ACC_ACTIVE,
+import { ACC, ACC_LIM, ACC_POSTING, ACC_ACTIVE,
     readFile, checkError, checkNoError, clearProfile, checkImage } from './common'
 
 const port = 63205;
@@ -92,14 +92,19 @@ describe('upload', function() {
 
     beforeEach(async function () {
         await clearProfile(port, ACC)
+        await clearProfile(port, ACC_LIM)
     })
 
-    it('should upload jpeg image', async function() {
+    it('should upload jpeg image + repeat by same acc', async function() {
         this.slow(1000)
         this.timeout(2000)
         var { response, body, } = await uploadImage({
             filename: 'test6000x4000.jpg',
             checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/jpeg', size_bytes: 185833,
         })
 
         var { url, } = body
@@ -111,6 +116,21 @@ describe('upload', function() {
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
             'webp', 1280, 854)
+
+        console.log('-- repeating upload by same acc')
+
+        var { response, body, } = await uploadImage({
+            filename: 'test6000x4000.jpg',
+            checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/jpeg', size_bytes: 185833,
+            already_uploaded: true,
+        })
+
+        var { url, } = body
+        await checkImage(url, 'jpeg', 2560, 1707);
     })
 
     it('should upload gif image', async function() {
@@ -119,6 +139,10 @@ describe('upload', function() {
         var { response, body, } = await uploadImage({
             filename: 'test600x400.gif',
             checkKey: 'DQmf1cT9WXgozLWnkGfYZmHVvuBN8o2wxZ9cnT4YzSmorKa',
+        })
+        assert.deepEqual(body.meta, {
+            width: 600, height: 400,
+            mime_type: 'image/gif', size_bytes: 1549776,
         })
 
         var { url, } = body
@@ -146,6 +170,10 @@ describe('upload', function() {
             filename: 'test60x40.png',
             checkKey: 'DQmQjt6cW235TniCJJm7tyWMipLsTh3HdAm142WQ4yreGLd',
         })
+        assert.deepEqual(body.meta, {
+            width: 60, height: 40,
+            mime_type: 'image/png', size_bytes: 201,
+        })
 
         var { url, } = body
         await checkImage(url, 'png', 60, 40)
@@ -156,6 +184,10 @@ describe('upload', function() {
         var { response, body, } = await uploadImage({
             filename: 'test6000x4000.png',
             checkKey: 'DQmNuk4xL1ubmbrDwaKThT4RKHhuEZxUDMbFfPHqFacr9WH',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/png', size_bytes: 17357,
         })
 
         var { url, } = body
@@ -172,6 +204,10 @@ describe('upload', function() {
             filename: 'test60x40.webp',
             checkKey: 'DQmQoB5yBUa5WV3q3UbTFA4m9ug3XXPgKnPVobXhJkZcviN',
         })
+        assert.deepEqual(body.meta, {
+            width: 60, height: 40,
+            mime_type: 'image/webp', size_bytes: 622,
+        })
 
         var { url, } = body
         await checkImage(url, 'webp', 60, 40)
@@ -182,6 +218,10 @@ describe('upload', function() {
         var { response, body, } = await uploadImage({
             filename: 'test6000x4000.webp',
             checkKey: 'DQmUfVKETNo9hdhzsSJFDG632fvMQJPh7dKwetFTmj8Z6Tw',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/webp', size_bytes: 10158,
         })
 
         var { url, } = body
@@ -198,6 +238,10 @@ describe('upload', function() {
             filename: 'test850x1170.tif',
             checkKey: 'DQmVeWbx3W9FWLBssbUEDiXbyLKRJbn7vY7DvEAVecUWGPq',
         })
+        assert.deepEqual(body.meta, {
+            width: 850, height: 1170,
+            mime_type: 'image/tiff', size_bytes: 2803830,
+        })
 
         var { url, } = body
         await checkImage(url, 'tiff', 850, 1170);
@@ -208,6 +252,10 @@ describe('upload', function() {
         var { response, body, } = await uploadImage({
             filename: 'test2550x3510.tiff',
             checkKey: 'DQmefJ3QahK6T8eNVZGiTCfxRMoxFRKCCdNDoAr7AGqg9qL',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2550, height: 3510,
+            mime_type: 'image/tiff', size_bytes: 8963944,
         })
 
         var { url, } = body
@@ -224,6 +272,10 @@ describe('upload', function() {
             filename: 'test80x80.svg',
             checkKey: 'DQmSz8kKMVTWJVbaUapt6zRFeE9Hdg5TgcZ87dV8f3qxqm7',
         })
+        assert.deepEqual(body.meta, {
+            width: 80, height: 80,
+            mime_type: 'image/svg+xml', size_bytes: 1179,
+        })
 
         var { url, } = body
         await checkImage(url, 'svg', 80, 80)
@@ -234,6 +286,11 @@ describe('upload', function() {
         var { response, body, } = await uploadImage({
             filename: 'test6000x4000.svg',
             checkKey: 'DQmasiUsvbGVzbdQd5Ud3JJrcvcXsRsP5sfAzLPgPi7DTk6',
+        })
+        // it will be png because of resize
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/png', size_bytes: 22015,
         })
 
         var { url, } = body
@@ -253,6 +310,10 @@ describe('upload', function() {
                 active: ACC_ACTIVE,
             },
             checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
+        })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/jpeg', size_bytes: 185833,
         })
     })
 
@@ -314,7 +375,7 @@ describe('upload', function() {
 
     it('should not upload HTML/JS/WASM file (XSS)', async function() {
         this.slow(15000)
-        this.timeout(16000)
+        this.timeout(18000)
         var binTypes = ['test.wasm',
             'test.jpg', 'test.jpeg', 'test.jpe', 'test.jfif', 'test.jif', 'test.pjpeg', 'test.pjp',
             'test.png', 'test.gif', 'test.webp', 'test.svg', 'test.svgz',

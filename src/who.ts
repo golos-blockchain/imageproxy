@@ -54,6 +54,10 @@ export async function whoHandler(ctx: KoaContext) {
                 account: accounts[i].account,
                 uploaded: unixMsecToString(accounts[i].uploaded_msec),
                 uploaded_msec: accounts[i].uploaded_msec,
+                mime_type: accounts[i].mime_type,
+                width: accounts[i].width,
+                height: accounts[i].height,
+                size_bytes: accounts[i].size_bytes,
             }
         }
     }

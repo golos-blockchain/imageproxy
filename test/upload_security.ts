@@ -110,6 +110,10 @@ describe('upload_security', function() {
             acc: ACC_LIM,
             checkKey: key
         })
+        assert.deepEqual(body.meta, {
+            width: 2560, height: 1707,
+            mime_type: 'image/jpeg', size_bytes: 185833,
+        })
         var url = body.url.replace(port + '/', port + '/who/')
 
         var res = await needle('get', url);
@@ -121,6 +125,10 @@ describe('upload_security', function() {
         assert.equal(res.body.accounts.length, 1)
         var upload = res.body.accounts[0]
         assert.equal(upload.account, ACC_LIM)
+        assert.equal(upload.width, 2560)
+        assert.equal(upload.height, 1707)
+        assert.equal(upload.size_bytes, 185833)
+        assert.equal(upload.mime_type, 'image/jpeg')
 
         var uploaders = [ACC_LIM]
 
@@ -132,6 +140,11 @@ describe('upload_security', function() {
                 filename: 'test6000x4000.jpg',
                 acc,
                 checkKey: key
+            })
+            assert.deepEqual(body.meta, {
+                width: 2560, height: 1707,
+                mime_type: 'image/jpeg', size_bytes: 185833,
+                already_uploaded: true,
             })
             var url = body.url.replace(port + '/', port + '/who/')
 
@@ -150,6 +163,10 @@ describe('upload_security', function() {
             for (let i = 0; i < uploaders.length; ++i) {
                 var upload = res.body.accounts[i]
                 assert.equal(upload.account, uploaders[i])
+                assert.equal(upload.width, 2560)
+                assert.equal(upload.height, 1707)
+                assert.equal(upload.size_bytes, 185833)
+                assert.equal(upload.mime_type, 'image/jpeg')
             }
         }
 

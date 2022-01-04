@@ -57,6 +57,10 @@ export async function profileHandler(ctx: KoaContext) {
                 upload_key: uploads[i].upload_key,
                 uploaded: unixMsecToString(uploads[i].uploaded_msec),
                 uploaded_msec: uploads[i].uploaded_msec,
+                mime_type: uploads[i].mime_type,
+                width: uploads[i].width,
+                height: uploads[i].height,
+                size_bytes: uploads[i].size_bytes,
             }
         } else {
             uploads[i] = prefix + uploads[i]

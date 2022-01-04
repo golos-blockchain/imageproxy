@@ -109,7 +109,24 @@ export async function uploadHandler(ctx: KoaContext) {
     const key = 'D' + multihash.toB58String(multihash.encode(imageHash, 'sha2-256'))
     const url = new URL(`${ key }/${ file.name }`, SERVICE_URL)
 
-    if (!(await storeExists(uploadStore, key))) {
+    let meta: any = {
+        mime_type: file.mime,
+        width: 0,
+        height: 0,
+        size_bytes: 0,
+    }
+
+    const exists = await storeExists(uploadStore, key)
+    if (exists) {
+        try {
+            const res = await Tarantool.instance('tarantool')
+                .call('get_existant_upload', key)
+            meta = res[0][0] || meta
+        } catch (err) {
+            ctx.log.error('Cannot get upload of', key, err)
+        }
+    }
+    if (!exists || !meta.width || !meta.size_bytes) {
         APIError.assert(data.length > 0, APIError.Code.InvalidImage)
 
         const contentType = await mimeMagic(data)
@@ -127,16 +144,26 @@ export async function uploadHandler(ctx: KoaContext) {
             buf = await resized.toBuffer()
         }
 
+        const metadata = await Sharp(buf).metadata()
+        if (metadata.width) { meta.width = metadata.width }
+        if (metadata.height) { meta.height = metadata.height }
+        if (metadata.size) { meta.size_bytes = metadata.size }
+        // SVGs are converting to PNG if resized
+        if (metadata.format === 'png') { meta.mime_type = 'image/png' }
+
         await storeWrite(uploadStore, key, buf)
     } else {
         ctx.log.debug('key %s already exists in store', key)
+        meta.already_uploaded = true
     }
 
     try {
         await Tarantool.instance('tarantool')
-            .call('record_upload', account.name, key, Date.now())
+            .call('record_upload', account.name, key, Date.now(),
+                meta.mime_type, meta.width, meta.height, meta.size_bytes)
     } catch (err) {
-        ctx.log.error('Cannot record upload for', account.name, key)
+        ctx.log.error('Cannot record upload for', account.name, key, err)
+        throw err
     }
 
     ctx.log.info({
@@ -147,6 +174,7 @@ export async function uploadHandler(ctx: KoaContext) {
     ctx.status = 200
     ctx.body = {
         url,
+        meta,
         ratelimit: limit.toAPI(),
     }
 }
