@@ -79,9 +79,24 @@ make devserver
 
 При этом есть возможность запустить только определенные тесты: `grep='upload gif' make test` - запустит только тесты, содержащие в названии слова 'upload gif'. 
 
+Для просмотра логов Tarantool в реальном времени:
+```
+docker logs --tail 10 -f imageproxy-db
+```
+
 Чтобы посмотреть, как лежат данные в Tarantool (с целью изучения, проверки и т.п.), можно использовать команду:
 ```
+docker exec -it imageproxy-db tarantoolctl connect 49003
+```
+или в случае docker-compose:
+```
 docker-compose exec db tarantoolctl connect 49003
+```
+
+Для остановки и очистки Tarantool:
+```
+docker stop imageproxy-db
+docker rm imageproxy-db
 ```
 
 ### Запуск в продакшен
