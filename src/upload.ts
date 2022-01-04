@@ -86,7 +86,7 @@ export async function uploadHandler(ctx: KoaContext) {
 
     APIError.assert(verified.posting || verified.active, APIError.Code.InvalidSignature)
 
-    APIError.assert(!ACCOUNT_BLACKLIST.includes(account.name), APIError.Code.Blacklisted)
+    APIError.assert(!ACCOUNT_BLACKLIST.includes(account.name), APIError.Code.AccountBlacklisted)
 
     const limit = await getRateLimit(ctx, account.name)
 
@@ -104,7 +104,7 @@ export async function uploadHandler(ctx: KoaContext) {
     }
 
     const reputation = golos.formatter.reputation(account.reputation, true)
-    APIError.assert(reputation >= UPLOAD_LIMITS.reputation, APIError.Code.Deplorable)
+    APIError.assert(reputation >= UPLOAD_LIMITS.reputation, APIError.Code.TooLowAccountReputation)
 
     const key = 'D' + multihash.toB58String(multihash.encode(imageHash, 'sha2-256'))
     const url = new URL(`${ key }/${ file.name }`, SERVICE_URL)

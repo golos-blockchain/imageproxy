@@ -5,8 +5,8 @@ import {camelToSnake} from './utils'
 
 enum ErrorCode {
     BadRequest,
+    AccountBlacklisted,
     Blacklisted,
-    Deplorable,
     FileMissing,
     InternalError,
     InvalidImage,
@@ -19,14 +19,15 @@ enum ErrorCode {
     NoSuchAccount,
     NotFound,
     PayloadTooLarge,
+    TooLowAccountReputation,
     QuotaExceeded,
     UpstreamError,
 }
 
 const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.BadRequest, 400],
+    [ErrorCode.AccountBlacklisted, 403],
     [ErrorCode.Blacklisted, 451],
-    [ErrorCode.Deplorable, 403],
     [ErrorCode.FileMissing, 400],
     [ErrorCode.InternalError, 500],
     [ErrorCode.InvalidImage, 400],
@@ -39,6 +40,7 @@ const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.NoSuchAccount, 404],
     [ErrorCode.NotFound, 404],
     [ErrorCode.PayloadTooLarge, 413],
+    [ErrorCode.TooLowAccountReputation, 403],
     [ErrorCode.QuotaExceeded, 429],
     [ErrorCode.UpstreamError, 400],
 ])

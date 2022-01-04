@@ -293,7 +293,7 @@ describe('upload', function() {
             acc: 'aerostorm2',
             checkResp: false,
         })
-        checkError(response, body, 451, 'blacklisted')
+        checkError(response, body, 403, 'account_blacklisted')
     })
 
     it('should not upload invalid image', async function() {
