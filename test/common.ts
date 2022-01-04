@@ -22,8 +22,10 @@ export async function assertThrows(block: () => Promise<any>) {
 }
 
 export function checkError(response: any, body: any, status: number, message: string, errMessage?: string) {
-    assert.equal(body.error.name, message, errMessage);
+    assert.equal(body.error, message, errMessage);
     assert.equal(response.statusCode, status, errMessage);
+    assert.equal(body.httpStatus, status, errMessage);
+    assert.equal(body.status, 'err', errMessage);
 }
 
 export function checkNoError(response: any, body?: any) {
@@ -31,6 +33,10 @@ export function checkNoError(response: any, body?: any) {
         assert.equal(body.error, undefined);
     }
     assert.equal(response.statusCode, 200);
+    if (body) {
+        assert.notEqual(body.status, 'err');
+        assert(body.httpStatus === undefined || body.httpStatus === 200);
+    }
 }
 
 export function readFile(filename: string) {

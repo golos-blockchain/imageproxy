@@ -87,9 +87,9 @@ describe('upload_security', function() {
         })
         console.log(body)
         checkError(response, body, 429, 'quota_exceeded')
-        assert.equal(body.error.info.uploads_remaining, 0)
-        assert.equal(body.error.info.capacity, 0)
-        assert.deepEqual(body.error.info.globals, getGlobals())
+        assert.equal(body.ratelimit.uploads_remaining, 0)
+        assert.equal(body.ratelimit.capacity, 0)
+        assert.deepEqual(body.ratelimit.globals, getGlobals())
 
         console.log('-- check we can upload by another acc')
 
@@ -154,7 +154,7 @@ describe('upload_security', function() {
         }
 
         var res = await needle('get', url + '?limit=51');
-        assert.equal(res.body.error.info.msg, 'limit cannot be greater than 50');
+        assert.equal(res.body.error, 'limit cannot be greater than 50');
         assert.equal(res.statusCode, 500);
     })      
 

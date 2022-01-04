@@ -92,7 +92,7 @@ export async function uploadHandler(ctx: KoaContext) {
 
     APIError.assert(!limit.exceeded, {
         code: APIError.Code.QuotaExceeded,
-        info: limit.toAPI(),
+        info: { ratelimit: limit.toAPI() },
     })
 
     try {

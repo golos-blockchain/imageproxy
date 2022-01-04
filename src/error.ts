@@ -101,8 +101,9 @@ export class APIError extends Error {
 
     public toJSON() {
         return {
-            info: this.info,
-            name: camelToSnake(ErrorCode[this.code]),
+            httpStatus: this.statusCode,
+            error: (this.info && this.info.msg) || camelToSnake(ErrorCode[this.code]),
+            ...this.info,
         }
     }
 }
@@ -116,7 +117,10 @@ export async function errorMiddleware(ctx: KoaContext, next: () => Promise<any>)
         }
         ctx.status = error.statusCode
         ctx['api_error'] = error
-        ctx.body = {error}
+        ctx.body = {
+            status: 'err',
+            ...error.toJSON(),
+        }
         ctx.app.emit('error', error, ctx.app)
     }
 }
