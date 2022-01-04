@@ -10,7 +10,6 @@ import * as Sharp from 'sharp'
 import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
-import {imageBlacklist} from './blacklist'
 import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
 import {APIError} from './error'
 import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
@@ -20,6 +19,12 @@ if (!Number.isFinite(MAX_IMAGE_SIZE)) {
     throw new Error('Invalid proxy_store.max_image_size')
 }
 const SERVICE_URL = new URL(config.get('service_url'))
+let URL_BLACKLIST: string[]
+try {
+    URL_BLACKLIST = config.get('url_blacklist')
+} catch (err) {
+    throw new Error('No url_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.json')
+}
 
 interface NeedleResponse extends http.IncomingMessage {
     body: any
@@ -159,7 +164,7 @@ export async function proxyHandler(ctx: KoaContext) {
     ctx.set('Cache-Control', 'public,max-age=600')
 
     // refuse to proxy images on blacklist
-    APIError.assert(imageBlacklist.includes(url.toString()) === false, APIError.Code.Blacklisted)
+    APIError.assert(URL_BLACKLIST.includes(url.toString()) === false, APIError.Code.Blacklisted)
 
     // where the original image is/will be stored
     let origStore: AbstractBlobStore
@@ -199,6 +204,7 @@ export async function proxyHandler(ctx: KoaContext) {
         const mimeType = await mimeMagic(head)
         ctx.set('Content-Type', mimeType)
         ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
+        ctx.set('X-URL', url.toString())
         ctx.body = stream
         return
     }
@@ -346,5 +352,6 @@ export async function proxyHandler(ctx: KoaContext) {
 
     ctx.set('Content-Type', contentType)
     ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
+    ctx.set('X-URL', url.toString())
     ctx.body = rv
 }
