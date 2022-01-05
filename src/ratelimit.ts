@@ -51,7 +51,7 @@ export class RateLimit {
 
         limit.consumptionPer1 = Math.floor(UPLOAD_LIMITS.duration / UPLOAD_LIMITS.max)
 
-        limit.now = Math.floor(Date.now() / (60 * 1000)) + 100500
+        limit.now = Math.floor(Date.now() / (60 * 1000))
         limit.elapsedMinutes = limit.now - limit.last_action
         const regeneratedCapacity = Math.min(
             UPLOAD_LIMITS.duration,
