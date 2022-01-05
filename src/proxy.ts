@@ -10,24 +10,21 @@ import * as Sharp from 'sharp'
 import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
-import {imageBlacklist} from './blacklist'
-import {KoaContext, proxyStore} from './common'
+import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
 import {APIError} from './error'
-import {base58Dec, mimeMagic, readStream, storeExists, storeWrite} from './utils'
+import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
-const MAX_IMAGE_SIZE = Number.parseInt(config.get('max_image_size'))
+const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
 if (!Number.isFinite(MAX_IMAGE_SIZE)) {
-    throw new Error('Invalid max image size')
+    throw new Error('Invalid proxy_store.max_image_size')
 }
 const SERVICE_URL = new URL(config.get('service_url'))
-
-/** Image types allowed to be proxied and resized. */
-const AcceptedContentTypes = [
-    'image/gif',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-]
+let URL_BLACKLIST: string[]
+try {
+    URL_BLACKLIST = config.get('url_blacklist')
+} catch (err) {
+    throw new Error('No url_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.json')
+}
 
 interface NeedleResponse extends http.IncomingMessage {
     body: any
@@ -142,13 +139,6 @@ function getImageKey(origKey: string, options: ProxyOptions): string {
     return rv.join('_')
 }
 
-export function safeParseInt(value: any): number | undefined {
-    // If the number can't be parsed (like if it's `nil` or `undefined`), then
-    // `basicNumber` will be `NaN`.
-    const basicNumber = parseInt(value, 10)
-    return isNaN(basicNumber) ? undefined : basicNumber
-}
-
 export async function proxyHandler(ctx: KoaContext) {
     ctx.tag({handler: 'proxy'})
 
@@ -174,19 +164,28 @@ export async function proxyHandler(ctx: KoaContext) {
     ctx.set('Cache-Control', 'public,max-age=600')
 
     // refuse to proxy images on blacklist
-    APIError.assert(imageBlacklist.includes(url.toString()) === false, APIError.Code.Blacklisted)
+    APIError.assert(URL_BLACKLIST.includes(url.toString()) === false, APIError.Code.Blacklisted)
 
     // where the original image is/will be stored
     let origStore: AbstractBlobStore
     let origKey: string
 
-    const urlHash = createHash('sha1')
-        .update(url.toString())
-        .digest()
-    origStore = proxyStore
-    origKey = 'U' + multihash.toB58String(
-        multihash.encode(urlHash, 'sha1')
-    )
+    const origIsUpload = SERVICE_URL.origin === url.origin && url.pathname[1] === 'D'
+    ctx.tag({ is_upload: origIsUpload, })
+    if (origIsUpload) {
+        // if we are proxying of own image use the uploadStore directly
+        // to avoid storing two copies of the original image
+        origStore = uploadStore
+        origKey = url.pathname.slice(1).split('/')[0]
+    } else {
+        const urlHash = createHash('sha1')
+            .update(url.toString())
+            .digest()
+        origStore = proxyStore
+        origKey = 'U' + multihash.toB58String(
+            multihash.encode(urlHash, 'sha1')
+        )
+    }
 
     const imageKey = getImageKey(origKey, options)
 
@@ -205,11 +204,16 @@ export async function proxyHandler(ctx: KoaContext) {
         const mimeType = await mimeMagic(head)
         ctx.set('Content-Type', mimeType)
         ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
+        ctx.set('X-URL', url.toString())
         ctx.body = stream
         return
     }
 
+    const maxStoreWidth: number|undefined = safeParseInt(config.get('proxy_store.max_store_image_width'))
+    const maxStoreHeight: number|undefined = safeParseInt(config.get('proxy_store.max_store_image_height'))
+
     // check if we have the original
+    let image: Sharp.Sharp|undefined
     let origData: Buffer
     let contentType: string
     if (await storeExists(origStore, origKey)) {
@@ -247,6 +251,15 @@ export async function proxyHandler(ctx: KoaContext) {
 
         origData = res.body
 
+        image = Sharp(origData)
+
+        const resized = await resizeIfTooLarge(image, maxStoreWidth, maxStoreHeight)
+
+        if (resized) {
+            image = resized
+            origData = await resized.toBuffer()
+        }
+
         ctx.log.debug('storing original %s', origKey)
         await storeWrite(origStore, origKey, origData)
     }
@@ -264,7 +277,10 @@ export async function proxyHandler(ctx: KoaContext) {
         // this is needed since resizing gifs (and conversion to webp, too) removes animation
         rv = origData
     } else {
-        const image = Sharp(origData).jpeg({
+        if (!image) {
+            image = Sharp(origData)
+        }
+        image = image.jpeg({
             quality: 85,
             force: false,
         }).png({
@@ -284,29 +300,20 @@ export async function proxyHandler(ctx: KoaContext) {
 
         APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
 
-        const maxWidth: number = safeParseInt(config.get('proxy_store.max_image_width')) || 1280
-        const maxHeight: number = safeParseInt(config.get('proxy_store.max_image_height')) || 8000
-        const maxResizeWidth: number = safeParseInt(config.get('proxy_store.max_resize_image_width')) || 8000
-        const maxResizeHeight: number = safeParseInt(config.get('proxy_store.max_resize_image_height')) || 8000
+        const defWidth: number|undefined = safeParseInt(config.get('proxy_store.max_image_width'))
+        const defHeight: number|undefined = safeParseInt(config.get('proxy_store.max_image_height'))
         let width: number | undefined = safeParseInt(options.width)
         let height: number | undefined = safeParseInt(options.height)
 
-        // If no width and height are provided, it will use the default image
-        // width and height, but cap it to the config-provided max image width
-        // and height. This is so we can save on bandwidth for the default case.
-        //
-        // If width and height are provided, it will use the provided width and
-        // height. This is so clients who need a higher-res image can still get
-        // one.
         if (width) {
-          if (width > maxResizeWidth) { width = maxResizeWidth }
+          if (maxStoreWidth && width > maxStoreWidth) { width = maxStoreWidth }
         } else {
-          if (metadata.width && metadata.width > maxWidth) { width = maxWidth }
+          if (defWidth && metadata.width && metadata.width > defWidth) { width = defWidth }
         }
         if (height) {
-          if (height > maxResizeHeight) { height = maxResizeHeight }
+          if (maxStoreHeight && height > maxStoreHeight) { height = maxStoreHeight }
         } else {
-          if (metadata.height && metadata.height > maxHeight) { height = maxHeight }
+          if (defHeight && metadata.height && metadata.height > defHeight) { height = defHeight }
         }
 
         switch (options.mode) {
@@ -314,8 +321,8 @@ export async function proxyHandler(ctx: KoaContext) {
                 image.rotate().resize(width, height, {fit: 'cover'})
                 break
             case ScalingMode.Fit:
-                if (!width) { width = maxWidth }
-                if (!height) { height = maxHeight }
+                if (!width) { width = defWidth }
+                if (!height) { height = defHeight }
 
                 image.rotate().resize(width, height, { fit: 'inside', withoutEnlargement: true })
                 break
@@ -345,5 +352,6 @@ export async function proxyHandler(ctx: KoaContext) {
 
     ctx.set('Content-Type', contentType)
     ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
+    ctx.set('X-URL', url.toString())
     ctx.body = rv
 }

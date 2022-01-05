@@ -1,0 +1,28 @@
+version: "3"
+services:
+
+  web:
+    image: golosblockchain/imageproxy:latest
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./cache:/app/cache
+      - ./production.json:/app/config/production.json
+      - ./blacklist.json:/app/config/blacklist.json
+    depends_on:
+      - db
+    ports:
+      - "8800:8800"
+    environment:
+      SDC_TARANTOOL_HOSTNAME: db
+
+  db:
+    image: golosblockchain/imageproxy:tarantool
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile-db
+    volumes:
+      - ./tarantool:/var/lib/tarantool

@@ -3,6 +3,9 @@
 import {AbstractBlobStore, BlobKey} from 'abstract-blob-store'
 import {Magic, MAGIC_MIME_TYPE} from 'mmmagic'
 import * as multihash from 'multihashes'
+import * as Sharp from 'sharp'
+
+import { APIError } from './error'
 
 const magic = new Magic(MAGIC_MIME_TYPE)
 
@@ -29,6 +32,13 @@ export function parseBool(input: any): boolean {
         default:
             throw new Error(`Ambiguous boolean: ${ input }`)
     }
+}
+
+export function safeParseInt(value: any): number | undefined {
+    // If the number can't be parsed (like if it's `nil` or `undefined`), then
+    // `basicNumber` will be `NaN`.
+    const basicNumber = parseInt(value, 10)
+    return isNaN(basicNumber) ? undefined : basicNumber
 }
 
 /** Convert CamelCase to snake_case. */
@@ -92,4 +102,33 @@ export function base58Enc(value: string): string {
 /** Decode utf8 string from Base58. */
 export function base58Dec(value: string): string {
     return multihash.fromB58String(value).toString('utf8')
+}
+
+export function unixMsecToString(msec: number) {
+    return new Date(msec).toISOString().split('.')[0]
+}
+
+export async function resizeIfTooLarge(image: Sharp.Sharp, maxWidth?: number, maxHeight?: number) {
+    let metadata: Sharp.Metadata
+    try {
+        metadata = await image.metadata()
+    } catch (cause) {
+        throw new APIError({cause, code: APIError.Code.InvalidImage})
+    }
+
+    APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
+
+    let width: any
+    if (maxWidth && metadata.width && metadata.width > maxWidth) { width = maxWidth }
+    let height: any
+    if (maxHeight && metadata.height && metadata.height > maxHeight) { height = maxHeight }
+
+    if (width || height) {
+        if (!width) { width = maxWidth }
+        if (!height) { height = maxHeight }
+
+        image.rotate().resize(width, height, {fit: 'inside', withoutEnlargement: true })
+        return image
+    }
+    return false
 }

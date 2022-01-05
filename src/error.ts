@@ -5,8 +5,8 @@ import {camelToSnake} from './utils'
 
 enum ErrorCode {
     BadRequest,
+    AccountBlacklisted,
     Blacklisted,
-    Deplorable,
     FileMissing,
     InternalError,
     InvalidImage,
@@ -19,14 +19,15 @@ enum ErrorCode {
     NoSuchAccount,
     NotFound,
     PayloadTooLarge,
-    QoutaExceeded,
+    TooLowAccountReputation,
+    QuotaExceeded,
     UpstreamError,
 }
 
 const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.BadRequest, 400],
+    [ErrorCode.AccountBlacklisted, 403],
     [ErrorCode.Blacklisted, 451],
-    [ErrorCode.Deplorable, 403],
     [ErrorCode.FileMissing, 400],
     [ErrorCode.InternalError, 500],
     [ErrorCode.InvalidImage, 400],
@@ -39,14 +40,15 @@ const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.NoSuchAccount, 404],
     [ErrorCode.NotFound, 404],
     [ErrorCode.PayloadTooLarge, 413],
-    [ErrorCode.QoutaExceeded, 429],
+    [ErrorCode.TooLowAccountReputation, 403],
+    [ErrorCode.QuotaExceeded, 429],
     [ErrorCode.UpstreamError, 400],
 ])
 
 interface APIErrorOptions {
     cause?: Error,
     code?: ErrorCode,
-    info?: {[key: string]: string},
+    info?: {[key: string]: any},
     message?: string,
 }
 
@@ -84,7 +86,7 @@ export class APIError extends Error {
 
     public readonly cause?: Error
     public readonly code: ErrorCode
-    public readonly info?: {[key: string]: string}
+    public readonly info?: {[key: string]: any}
 
     constructor(options: APIErrorOptions) {
         const code = options.code || ErrorCode.InternalError
@@ -101,8 +103,9 @@ export class APIError extends Error {
 
     public toJSON() {
         return {
-            info: this.info,
-            name: camelToSnake(ErrorCode[this.code]),
+            httpStatus: this.statusCode,
+            error: (this.info && this.info.msg) || camelToSnake(ErrorCode[this.code]),
+            ...this.info,
         }
     }
 }
@@ -116,7 +119,10 @@ export async function errorMiddleware(ctx: KoaContext, next: () => Promise<any>)
         }
         ctx.status = error.statusCode
         ctx['api_error'] = error
-        ctx.body = {error}
+        ctx.body = {
+            status: 'err',
+            ...error.toJSON(),
+        }
         ctx.app.emit('error', error, ctx.app)
     }
 }
