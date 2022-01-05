@@ -38,7 +38,7 @@ describe('upload_security', function() {
     })
 
     it('limits', async function() {
-        this.timeout(260000);
+        this.timeout(60000);
         var orig = readFile('test6000x4000.jpg')
         const makeImage = async (i: number) => {
             var image = Sharp(orig)
