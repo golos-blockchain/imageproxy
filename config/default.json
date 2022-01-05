@@ -47,7 +47,7 @@
     "max_image_size": 10000000, // 10mb
      // if image is larger, it will be resized before saving original to store
     "max_store_image_width": 2560,
-    "max_store_image_height": 3640
+    "max_store_image_height": 1440
   },
 
   // where to keep proxied images

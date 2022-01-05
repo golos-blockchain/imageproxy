@@ -103,19 +103,19 @@ describe('upload', function() {
             checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/jpeg', size_bytes: 185833,
+            width: 2160, height: 1440,
+            mime_type: 'image/jpeg', size_bytes: 142662,
         })
 
         var { url, } = body
-        await checkImage(url, 'jpeg', 2560, 1707);
+        await checkImage(url, 'jpeg', 2160, 1440);
 
         var [ key, fname, ] = url.split('/').slice(-2)
         await checkImage(`:${ port }/${ key }/bla.bla`,
-            'jpeg', 2560, 1707)
+            'jpeg', 2160, 1440)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 854)
+            'webp', 1280, 853)
 
         console.log('-- repeating upload by same acc')
 
@@ -124,13 +124,13 @@ describe('upload', function() {
             checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/jpeg', size_bytes: 185833,
+            width: 2160, height: 1440,
+            mime_type: 'image/jpeg', size_bytes: 142662,
             already_uploaded: true,
         })
 
         var { url, } = body
-        await checkImage(url, 'jpeg', 2560, 1707);
+        await checkImage(url, 'jpeg', 2160, 1440);
     })
 
     it('should upload gif image', async function() {
@@ -186,15 +186,15 @@ describe('upload', function() {
             checkKey: 'DQmNuk4xL1ubmbrDwaKThT4RKHhuEZxUDMbFfPHqFacr9WH',
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/png', size_bytes: 17357,
+            width: 2160, height: 1440,
+            mime_type: 'image/png', size_bytes: 12687,
         })
 
         var { url, } = body
-        await checkImage(url, 'png', 2560, 1707)
+        await checkImage(url, 'png', 2160, 1440)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 854)
+            'webp', 1280, 853)
     })
 
     it('should upload webp image', async function() {
@@ -220,15 +220,15 @@ describe('upload', function() {
             checkKey: 'DQmUfVKETNo9hdhzsSJFDG632fvMQJPh7dKwetFTmj8Z6Tw',
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/webp', size_bytes: 10158,
+            width: 2160, height: 1440,
+            mime_type: 'image/webp', size_bytes: 6870,
         })
 
         var { url, } = body
-        await checkImage(url, 'webp', 2560, 1707);
+        await checkImage(url, 'webp', 2160, 1440);
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 854)
+            'webp', 1280, 853)
     })
 
     it('should upload tiff image', async function() {
@@ -254,15 +254,15 @@ describe('upload', function() {
             checkKey: 'DQmefJ3QahK6T8eNVZGiTCfxRMoxFRKCCdNDoAr7AGqg9qL',
         })
         assert.deepEqual(body.meta, {
-            width: 2550, height: 3510,
-            mime_type: 'image/tiff', size_bytes: 8963944,
+            width: 1046, height: 1440,
+            mime_type: 'image/tiff', size_bytes: 224692,
         })
 
         var { url, } = body
-        await checkImage(url, 'tiff', 2550, 3510, 'b-w');
+        await checkImage(url, 'tiff', 1046, 1440);
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 1762)
+            'webp', 1046, 1440)
     })
 
     it('should upload svg image (if resize, it will be png)', async function() {
@@ -289,16 +289,16 @@ describe('upload', function() {
         })
         // it will be png because of resize
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/png', size_bytes: 22015,
+            width: 2160, height: 1440,
+            mime_type: 'image/png', size_bytes: 16244,
         })
 
         var { url, } = body
         // it will be png because of resize
-        await checkImage(url, 'png', 2560, 1707)
+        await checkImage(url, 'png', 2160, 1440)
 
         await checkImage(`http://localhost:${ port }/0x0/${ url }`,
-            'webp', 1280, 854)
+            'webp', 1280, 853)
     })
 
     it('should upload image with active key', async function() {
@@ -312,8 +312,8 @@ describe('upload', function() {
             checkKey: 'DQmZi174Xz96UrRVBMNRHb6A2FfU3z1HRPwPPQCgSMgdiUT',
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/jpeg', size_bytes: 185833,
+            width: 2160, height: 1440,
+            mime_type: 'image/jpeg', size_bytes: 142662,
         })
     })
 

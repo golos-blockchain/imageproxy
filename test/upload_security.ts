@@ -111,8 +111,8 @@ describe('upload_security', function() {
             checkKey: key
         })
         assert.deepEqual(body.meta, {
-            width: 2560, height: 1707,
-            mime_type: 'image/jpeg', size_bytes: 185833,
+            width: 2160, height: 1440,
+            mime_type: 'image/jpeg', size_bytes: 142662,
         })
         var url = body.url.replace(port + '/', port + '/who/')
 
@@ -125,9 +125,9 @@ describe('upload_security', function() {
         assert.equal(res.body.accounts.length, 1)
         var upload = res.body.accounts[0]
         assert.equal(upload.account, ACC_LIM)
-        assert.equal(upload.width, 2560)
-        assert.equal(upload.height, 1707)
-        assert.equal(upload.size_bytes, 185833)
+        assert.equal(upload.width, 2160)
+        assert.equal(upload.height, 1440)
+        assert.equal(upload.size_bytes, 142662)
         assert.equal(upload.mime_type, 'image/jpeg')
 
         var uploaders = [ACC_LIM]
@@ -142,8 +142,8 @@ describe('upload_security', function() {
                 checkKey: key
             })
             assert.deepEqual(body.meta, {
-                width: 2560, height: 1707,
-                mime_type: 'image/jpeg', size_bytes: 185833,
+                width: 2160, height: 1440,
+                mime_type: 'image/jpeg', size_bytes: 142662,
                 already_uploaded: true,
             })
             var url = body.url.replace(port + '/', port + '/who/')
@@ -163,9 +163,9 @@ describe('upload_security', function() {
             for (let i = 0; i < uploaders.length; ++i) {
                 var upload = res.body.accounts[i]
                 assert.equal(upload.account, uploaders[i])
-                assert.equal(upload.width, 2560)
-                assert.equal(upload.height, 1707)
-                assert.equal(upload.size_bytes, 185833)
+                assert.equal(upload.width, 2160)
+                assert.equal(upload.height, 1440)
+                assert.equal(upload.size_bytes, 142662)
                 assert.equal(upload.mime_type, 'image/jpeg')
             }
         }
