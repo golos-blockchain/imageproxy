@@ -4,17 +4,33 @@
   "node_url": "wss://api-full.golos.id/ws",
   "proxy": true,
   "log_level": "info",
-  // service_url": "https://devimages.golos.today",
-
+  "service_url": "https://images.golos.today",
+  "tarantool": {
+      "host": "127.0.0.1",
+      "port": 49003,
+      "username": "guest",
+      "password": ""
+  },
+  "upload_limits": {
+      "duration": 10080,
+      "max": 250,
+      "reputation": 10
+  },
+  "upload_store": {
+      "type": "fs",
+      "max_image_size": 10000000,
+      "max_store_image_width": 1920,
+      "max_store_image_height": 1080
+  },
   "proxy_store": {
-    "type": "fs",
-    // max_image_size": 10000000, // 10mb
-    // max_image_width": 1024,
-    // max_image_height": 1280,
-    // max_resize_image_width": 2560,
-    // max_resize_image_height": 1440,
-    "format": "webp",
-    "max_avatar_width": 200,
-    "max_avatar_height": 200
+      "type": "fs",
+      "max_image_size": 10000000,
+      "max_store_image_width": 1920,
+      "max_store_image_height": 1080,
+      "max_image_width": 1024,
+      "max_image_height": 1024,
+      "format": "webp",
+      "max_avatar_width": 200,
+      "max_avatar_height": 200
   }
 }
