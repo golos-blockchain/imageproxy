@@ -11,6 +11,7 @@ import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
 import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
+import { checkOrigin } from './cors'
 import {APIError} from './error'
 import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
@@ -165,6 +166,8 @@ export async function proxyHandler(ctx: KoaContext) {
 
     // refuse to proxy images on blacklist
     APIError.assert(URL_BLACKLIST.includes(url.toString()) === false, APIError.Code.Blacklisted)
+
+    checkOrigin(ctx)
 
     // where the original image is/will be stored
     let origStore: AbstractBlobStore

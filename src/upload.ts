@@ -10,6 +10,7 @@ import * as Sharp from 'sharp'
 import { URL } from 'url'
 
 import { AcceptedContentTypes, KoaContext, uploadStore } from './common'
+import { checkOrigin } from './cors'
 import { APIError, } from './error'
 import { getRateLimit, saveRateLimit, UPLOAD_LIMITS } from './ratelimit'
 import Tarantool from './tarantool'
@@ -63,6 +64,8 @@ export async function uploadHandler(ctx: KoaContext) {
 
     APIError.assert(Number.isFinite(contentLength), APIError.Code.LengthRequired)
     APIError.assert(contentLength <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
+
+    checkOrigin(ctx)
 
     const file = await parseMultipart(ctx.req)
     const data = await readStream(file.stream)
