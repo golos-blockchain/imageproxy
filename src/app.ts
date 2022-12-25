@@ -10,6 +10,7 @@ import * as util from 'util'
 
 import {KoaContext} from './common'
 import {APIError, errorMiddleware} from './error'
+import * as isBot from './isBot'
 import {logger, loggerMiddleware} from './logger'
 import {routes} from './routes'
 import {parseBool} from './utils'
@@ -41,6 +42,7 @@ app.on('error', (error, ctx: KoaContext) => {
 
 app.use(loggerMiddleware as any)
 app.use(errorMiddleware as any)
+app.use(isBot())
 app.use(cors())
 app.use(routes)
 app.use((ctx: Koa.Context) => {

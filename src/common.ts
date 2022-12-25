@@ -2,6 +2,7 @@
 
 import {AbstractBlobStore} from 'abstract-blob-store'
 import * as config from 'config'
+import * as fs from 'fs'
 import {IRouterContext} from 'koa-router'
 
 import { logger, } from './logger'
@@ -28,15 +29,40 @@ export const AcceptedContentTypes = [
 
 /** Blob storage. */
 
+const dir = 'cache'
+
 function loadStore(key: string): AbstractBlobStore {
     const conf = config.get(key) as any
     if (conf.type === 'memory') {
         logger.warn('using memory store for %s', key)
         return require('abstract-blob-store')()
     } else if (conf.type === 'fs') {
-        return require('fs-blob-store')('cache')
+        return require('fs-blob-store')(dir)
     } else {
         throw new Error(`Invalid storage type: ${ conf.type }`)
+    }
+}
+
+export function getAccessTime(key: string): any {
+    try {
+        const stats = fs.statSync(dir + '/' + key)
+        return stats.mtime
+    } catch (err) {
+        return null
+    }
+}
+
+export function setAccessTime(key: string, atime: any) {
+    try {
+        if (!atime) {
+            atime = new Date()
+        } else {
+            logger.info('resetting ' + key + ' last access time due a bot')
+        }
+        fs.utimesSync(dir + '/' + key, atime, atime)
+    } catch (err) {
+        logger.info('setAccessTime')
+        logger.info(err)
     }
 }
 

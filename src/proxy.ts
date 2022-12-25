@@ -10,9 +10,10 @@ import * as Sharp from 'sharp'
 import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
-import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
+import { AcceptedContentTypes, getAccessTime, KoaContext, proxyStore, setAccessTime, uploadStore, } from './common'
 import { checkOrigin } from './cors'
 import {APIError} from './error'
+import { logger } from './logger'
 import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
@@ -194,6 +195,10 @@ export async function proxyHandler(ctx: KoaContext) {
 
     // check if we already have a converted image for requested key
     if (await storeExists(proxyStore, imageKey)) {
+        let prevTime: any
+        if (ctx.isBot) {
+            prevTime = getAccessTime(imageKey)
+        }
         ctx.tag({store: 'resized'})
         ctx.log.debug('streaming %s from store', imageKey)
         const file = proxyStore.createReadStream(imageKey)
@@ -209,6 +214,10 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
         ctx.set('X-URL', url.toString())
         ctx.body = stream
+        if (!ctx.isBot) {
+            setAccessTime(origKey, null)
+        }
+        setAccessTime(imageKey, prevTime)
         return
     }
 
@@ -219,6 +228,10 @@ export async function proxyHandler(ctx: KoaContext) {
     let image: Sharp.Sharp|undefined
     let origData: Buffer
     let contentType: string
+    let prevAtime: any
+    if (ctx.isBot) {
+        prevAtime = getAccessTime(origKey)
+    }
     if (await storeExists(origStore, origKey)) {
         ctx.tag({store: 'original'})
         origData = await readStream(origStore.createReadStream(origKey))
@@ -266,6 +279,7 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.log.debug('storing original %s', origKey)
         await storeWrite(origStore, origKey, origData)
     }
+    setAccessTime(origKey, prevAtime)
 
     let rv: Buffer
     if (contentType === 'image/gif' &&
@@ -349,8 +363,14 @@ export async function proxyHandler(ctx: KoaContext) {
         }
 
         rv = await image.toBuffer()
+
         ctx.log.debug('storing converted %s', imageKey)
+        prevAtime = null
+        if (ctx.isBot) {
+            prevAtime = getAccessTime(imageKey)
+        }
         await storeWrite(proxyStore, imageKey, rv)
+        setAccessTime(imageKey, prevAtime)
     }
 
     ctx.set('Content-Type', contentType)
