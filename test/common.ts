@@ -7,8 +7,8 @@ import * as sharp from 'sharp'
 import Tarantool from './../src/tarantool'
 
 export const ACC = 'xel'
-export const ACC_POSTING = '5K1aJ8JayUA7c2Ptg9Y2DetKxSvXGXa5GCcvYeHtn1Xh3v4egPS'
-export const ACC_ACTIVE = '5JFZC7AtEe1wF2ce6vPAUxDeevzYkPgmtR14z9ZVgvCCtrFAaLw'
+export const ACC_POSTING = '5HwQScueMZdELZpjVBD4gm6xhiKiMqGx18g4WtQ6wVr4nBdSxY5'
+export const ACC_ACTIVE = '5K67PNheLkmxkgJ5UjvR8Nyt3GVPoLEN1dMZjFuNETzrNyMecPG'
 
 // acc to test upload limits
 export const ACC_LIM = 'val'
