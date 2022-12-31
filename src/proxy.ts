@@ -27,6 +27,12 @@ try {
 } catch (err) {
     throw new Error('No url_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.json')
 }
+let BACKUP_PROXIES: string[]
+try {
+    BACKUP_PROXIES = config.get('proxy_store.backup_proxies')
+} catch (err) {
+    logger.warn(err)
+}
 
 interface NeedleResponse extends http.IncomingMessage {
     body: any
@@ -227,7 +233,7 @@ export async function proxyHandler(ctx: KoaContext) {
     // check if we have the original
     let image: Sharp.Sharp|undefined
     let origData: Buffer
-    let contentType: string
+    let contentType!: string
     let prevAtime: any
     if (ctx.isBot) {
         prevAtime = getAccessTime(origKey)
@@ -240,30 +246,49 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.tag({store: 'fetch'})
         ctx.log.debug({url: url.toString()}, 'fetching image')
 
-        let res: NeedleResponse
+        let res!: NeedleResponse
+
+        const tryFetchImage = async () => {
+            try {
+                res = await fetchUrl(url.toString(), {
+                    open_timeout: 5 * 1000,
+                    response_timeout: 5 * 1000,
+                    read_timeout: 60 * 1000,
+                    compressed: true,
+                    parse_response: false,
+                    follow_max: 5,
+                    user_agent: 'GolosProxy/1.0',
+                } as any)
+            } catch (cause) {
+                throw new APIError({cause, code: APIError.Code.UpstreamError})
+            }
+
+            APIError.assert(res.bytes <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
+            APIError.assert(Buffer.isBuffer(res.body), APIError.Code.InvalidImage)
+
+            if (Math.floor((res.statusCode || 404) / 100) !== 2) {
+                throw new APIError({code: APIError.Code.InvalidImage})
+            }
+
+            contentType = await mimeMagic(res.body)
+            APIError.assert(AcceptedContentTypes.includes(contentType), APIError.Code.InvalidImage)
+        }
+
         try {
-            res = await fetchUrl(url.toString(), {
-                open_timeout: 5 * 1000,
-                response_timeout: 5 * 1000,
-                read_timeout: 60 * 1000,
-                compressed: true,
-                parse_response: false,
-                follow_max: 5,
-                user_agent: 'GolosProxy/1.0',
-            } as any)
-        } catch (cause) {
-            throw new APIError({cause, code: APIError.Code.UpstreamError})
+            await tryFetchImage()
+        } catch (errImg) {
+            if (BACKUP_PROXIES.includes(url.host) || BACKUP_PROXIES.includes(url.hostname)) {
+                logger.error('Backup proxy failure: ' + url.toString())
+                try {
+                    url = new URL(url.pathname.split('/').slice(2).join('/'))
+                } catch (errUrl) {
+                    throw errImg
+                }
+                await tryFetchImage()
+            } else {
+                throw errImg
+            }
         }
-
-        APIError.assert(res.bytes <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
-        APIError.assert(Buffer.isBuffer(res.body), APIError.Code.InvalidImage)
-
-        if (Math.floor((res.statusCode || 404) / 100) !== 2) {
-            throw new APIError({code: APIError.Code.InvalidImage})
-        }
-
-        contentType = await mimeMagic(res.body)
-        APIError.assert(AcceptedContentTypes.includes(contentType), APIError.Code.InvalidImage)
 
         origData = res.body
 

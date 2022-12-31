@@ -66,6 +66,12 @@
     "format": "webp",
     // for GIFs: maximum resize-width and resize-height to strip animated GIFs, because they are avatars. Larger GIF images will not be resized, because resizing removes animation.
     "max_avatar_width": 200,
-    "max_avatar_height": 200
+    "max_avatar_height": 200,
+    // proxies what can be used as backup in URLs, but if image not working, we will ignore them
+    // it can be only proxies based on steemimages or Golos Proxy
+    // example: steemitimages.com
+    "backup_proxies": [
+      "steemitimages.com"
+    ]
   }
 }
