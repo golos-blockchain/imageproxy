@@ -15,5 +15,7 @@
     "http://image.ibb.co/minGCF/aa_lenie_urbina_avielle_richman_meme.png",
     "https://steemitimages.com/DQmV858o66qa9wSBQCD6nu7xv45UVsvcNzsQpu9K6FrV1c2/19.jpg",
     "https://images.hive.blog/DQmNvk94uq6VAgS3t4zAeQCezGCToqGNsUkv4fkPo4NwVDm/image.png"
-  ]
+  ],
+  // both for upload and proxy
+  "origin_whitelist": [],
 }

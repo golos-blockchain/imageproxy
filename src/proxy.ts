@@ -10,8 +10,10 @@ import * as Sharp from 'sharp'
 import streamHead from 'stream-head/dist-es6'
 import {URL} from 'url'
 
-import { AcceptedContentTypes, KoaContext, proxyStore, uploadStore, } from './common'
+import { AcceptedContentTypes, getAccessTime, KoaContext, proxyStore, setAccessTime, uploadStore, } from './common'
+import { checkOrigin } from './cors'
 import {APIError} from './error'
+import { logger } from './logger'
 import { base58Dec, mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
 const MAX_IMAGE_SIZE = Number.parseInt(config.get('proxy_store.max_image_size'))
@@ -24,6 +26,12 @@ try {
     URL_BLACKLIST = config.get('url_blacklist')
 } catch (err) {
     throw new Error('No url_blacklist in config. It looks like NODE_CONFIG_ENV does not contain blacklist.json')
+}
+let BACKUP_PROXIES: string[]
+try {
+    BACKUP_PROXIES = config.get('proxy_store.backup_proxies')
+} catch (err) {
+    logger.warn(err)
 }
 
 interface NeedleResponse extends http.IncomingMessage {
@@ -166,6 +174,8 @@ export async function proxyHandler(ctx: KoaContext) {
     // refuse to proxy images on blacklist
     APIError.assert(URL_BLACKLIST.includes(url.toString()) === false, APIError.Code.Blacklisted)
 
+    checkOrigin(ctx)
+
     // where the original image is/will be stored
     let origStore: AbstractBlobStore
     let origKey: string
@@ -191,6 +201,10 @@ export async function proxyHandler(ctx: KoaContext) {
 
     // check if we already have a converted image for requested key
     if (await storeExists(proxyStore, imageKey)) {
+        let prevTime: any
+        if (ctx.isBot) {
+            prevTime = getAccessTime(imageKey)
+        }
         ctx.tag({store: 'resized'})
         ctx.log.debug('streaming %s from store', imageKey)
         const file = proxyStore.createReadStream(imageKey)
@@ -206,6 +220,10 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.set('Cache-Control', 'public,max-age=29030400,immutable')
         ctx.set('X-URL', url.toString())
         ctx.body = stream
+        if (!ctx.isBot) {
+            setAccessTime(origKey, null)
+        }
+        setAccessTime(imageKey, prevTime)
         return
     }
 
@@ -215,7 +233,11 @@ export async function proxyHandler(ctx: KoaContext) {
     // check if we have the original
     let image: Sharp.Sharp|undefined
     let origData: Buffer
-    let contentType: string
+    let contentType!: string
+    let prevAtime: any
+    if (ctx.isBot) {
+        prevAtime = getAccessTime(origKey)
+    }
     if (await storeExists(origStore, origKey)) {
         ctx.tag({store: 'original'})
         origData = await readStream(origStore.createReadStream(origKey))
@@ -224,30 +246,49 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.tag({store: 'fetch'})
         ctx.log.debug({url: url.toString()}, 'fetching image')
 
-        let res: NeedleResponse
+        let res!: NeedleResponse
+
+        const tryFetchImage = async () => {
+            try {
+                res = await fetchUrl(url.toString(), {
+                    open_timeout: 5 * 1000,
+                    response_timeout: 5 * 1000,
+                    read_timeout: 60 * 1000,
+                    compressed: true,
+                    parse_response: false,
+                    follow_max: 5,
+                    user_agent: 'GolosProxy/1.0',
+                } as any)
+            } catch (cause) {
+                throw new APIError({cause, code: APIError.Code.UpstreamError})
+            }
+
+            APIError.assert(res.bytes <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
+            APIError.assert(Buffer.isBuffer(res.body), APIError.Code.InvalidImage)
+
+            if (Math.floor((res.statusCode || 404) / 100) !== 2) {
+                throw new APIError({code: APIError.Code.InvalidImage})
+            }
+
+            contentType = await mimeMagic(res.body)
+            APIError.assert(AcceptedContentTypes.includes(contentType), APIError.Code.InvalidImage)
+        }
+
         try {
-            res = await fetchUrl(url.toString(), {
-                open_timeout: 5 * 1000,
-                response_timeout: 5 * 1000,
-                read_timeout: 60 * 1000,
-                compressed: true,
-                parse_response: false,
-                follow_max: 5,
-                user_agent: 'GolosProxy/1.0',
-            } as any)
-        } catch (cause) {
-            throw new APIError({cause, code: APIError.Code.UpstreamError})
+            await tryFetchImage()
+        } catch (errImg) {
+            if (BACKUP_PROXIES.includes(url.host) || BACKUP_PROXIES.includes(url.hostname)) {
+                logger.error('Backup proxy failure: ' + url.toString())
+                try {
+                    url = new URL(url.pathname.split('/').slice(2).join('/'))
+                } catch (errUrl) {
+                    throw errImg
+                }
+                await tryFetchImage()
+            } else {
+                throw errImg
+            }
         }
-
-        APIError.assert(res.bytes <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
-        APIError.assert(Buffer.isBuffer(res.body), APIError.Code.InvalidImage)
-
-        if (Math.floor((res.statusCode || 404) / 100) !== 2) {
-            throw new APIError({code: APIError.Code.InvalidImage})
-        }
-
-        contentType = await mimeMagic(res.body)
-        APIError.assert(AcceptedContentTypes.includes(contentType), APIError.Code.InvalidImage)
 
         origData = res.body
 
@@ -263,6 +304,7 @@ export async function proxyHandler(ctx: KoaContext) {
         ctx.log.debug('storing original %s', origKey)
         await storeWrite(origStore, origKey, origData)
     }
+    setAccessTime(origKey, prevAtime)
 
     let rv: Buffer
     if (contentType === 'image/gif' &&
@@ -346,8 +388,14 @@ export async function proxyHandler(ctx: KoaContext) {
         }
 
         rv = await image.toBuffer()
+
         ctx.log.debug('storing converted %s', imageKey)
+        prevAtime = null
+        if (ctx.isBot) {
+            prevAtime = getAccessTime(imageKey)
+        }
         await storeWrite(proxyStore, imageKey, rv)
+        setAccessTime(imageKey, prevAtime)
     }
 
     ctx.set('Content-Type', contentType)

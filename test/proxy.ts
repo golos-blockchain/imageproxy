@@ -1,5 +1,6 @@
 import 'mocha'
 import * as assert from 'assert'
+import {createHash} from 'crypto'
 import * as http from 'http'
 import * as needle from 'needle'
 import * as multihash from 'multihashes'
@@ -31,6 +32,16 @@ describe('proxy', function() {
         }
     })
 
+    function keyByUrl(url: string): string {
+        const urlHash = createHash('sha1')
+            .update(url)
+            .digest()
+        const key = 'U' + multihash.toB58String(
+            multihash.encode(urlHash, 'sha1')
+        )
+        return key
+    }
+
     before((done) => { imageServer.listen(port+1, 'localhost', done) })
     after((done) => { imageServer.close(done) })
 
@@ -43,6 +54,71 @@ describe('proxy', function() {
                 fs.unlinkSync(filePath)
             }
         }
+    })
+
+    it('proxy - bot test', async function() {
+        var now = new Date()
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`)
+        checkNoError(res, res.body)
+
+        var dir = path.resolve(__dirname, '../cache')
+
+        function getAtime(key: string): Date {
+            return fs.statSync(path.resolve(dir, key)).mtime
+        }
+
+        function remove(key: string) {
+            return fs.unlinkSync(path.resolve(dir, key))
+        }
+
+        var url = `http://localhost:${ port+1 }/bot_test.png`
+        var origKey = keyByUrl(url)
+        var timeOrig = getAtime(origKey)
+        var imageKey = origKey + '_Fit_WEBP'
+        var timeImage = getAtime(imageKey)
+
+        const botOpts = {
+            headers: {
+                'User-Agent': 'yandexbot'
+            }
+        }
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`)
+        checkNoError(res, res.body)
+        var timeOrig2 = getAtime(origKey)
+        var timeImage2 = getAtime(imageKey)
+        assert.ok(timeOrig2 > timeOrig)
+        assert.ok(timeImage2 > timeImage)
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`, botOpts)
+        checkNoError(res, res.body)
+        var timeOrig3 = getAtime(origKey)
+        var timeImage3 = getAtime(imageKey)
+        assert.equal(timeOrig3.getTime(), timeOrig2.getTime())
+        assert.equal(timeImage3.getTime(), timeImage2.getTime())
+
+        remove(imageKey)
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`)
+        checkNoError(res, res.body)
+        var timeOrig4 = getAtime(origKey)
+        var timeImage4 = getAtime(imageKey)
+        assert.ok(timeOrig4 > timeOrig2)
+        assert.ok(timeImage4 > timeImage2)
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`, botOpts)
+        checkNoError(res, res.body)
+        var timeOrig5 = getAtime(origKey)
+        var timeImage5 = getAtime(imageKey)
+        assert.equal(timeOrig5.getTime(), timeOrig4.getTime())
+        assert.equal(timeImage5.getTime(), timeImage4.getTime())
+
+        remove(origKey)
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`, botOpts)
+        checkNoError(res, res.body)
+        var timeImage6 = getAtime(imageKey)
+        assert.equal(timeImage6.getTime(), timeImage5.getTime())
     })
 
     it('should proxy', async function() {
