@@ -5,6 +5,7 @@ import { KoaContext } from './common'
 import { APIError, } from './error'
 import { logger } from './logger'
 
+const SERVICE_URL = new URL(config.get('service_url'))
 const ORIGIN_WHITELIST: string[] = []
 const whitelistRaw: string[] = config.get('origin_whitelist')
 for (const orig of whitelistRaw) {
@@ -46,6 +47,9 @@ export function checkOrigin(ctx: KoaContext) {
             referer = new URL(referer)
         } catch (err) {
             APIError.assert(false, errorOpts)
+        }
+        if (referer.hostname === SERVICE_URL.hostname) {
+            return
         }
         const pass = ORIGIN_WHITELIST.includes(referer.hostname) || ORIGIN_WHITELIST.includes(referer.host)
         APIError.assert(pass, errorOpts)
