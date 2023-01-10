@@ -56,6 +56,18 @@ describe('proxy', function() {
         }
     })
 
+    // to test it, add something in origin_whitelist
+    /*it('proxy - cors test', async function() {
+        const opts = {
+            headers: {
+                'Referer': 'http://localhost:63205'
+            }
+        }
+
+        var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`, opts)
+        checkNoError(res, res.body)
+    })*/
+
     it('proxy - bot test', async function() {
         var now = new Date()
         var res = await needle('get', `http://localhost:${ port }/0x0/http://localhost:${ port+1 }/bot_test.png`)
