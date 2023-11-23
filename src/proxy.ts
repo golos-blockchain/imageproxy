@@ -264,14 +264,29 @@ export async function proxyHandler(ctx: KoaContext) {
             }
 
             APIError.assert(res.bytes <= MAX_IMAGE_SIZE, APIError.Code.PayloadTooLarge)
-            APIError.assert(Buffer.isBuffer(res.body), APIError.Code.InvalidImage)
+            APIError.assert(Buffer.isBuffer(res.body), {
+                code: APIError.Code.InvalidImage,
+                message: 'Cannot get buffer from image URL'
+            })
 
             if (Math.floor((res.statusCode || 404) / 100) !== 2) {
-                throw new APIError({code: APIError.Code.InvalidImage})
+                throw new APIError({
+                    code: APIError.Code.InvalidImage,
+                    message: 'Image URL returns error code',
+                    info: {
+                        error_code: res.statusCode || 404
+                    }
+                })
             }
 
             contentType = await mimeMagic(res.body)
-            APIError.assert(AcceptedContentTypes.includes(contentType), APIError.Code.InvalidImage)
+            APIError.assert(AcceptedContentTypes.includes(contentType), {
+                code: APIError.Code.InvalidImage,
+                message: 'Wrong image content type',
+                info: {
+                    content_type: contentType
+                }
+            })
         }
 
         try {
@@ -337,10 +352,17 @@ export async function proxyHandler(ctx: KoaContext) {
         try {
             metadata = await image.metadata()
         } catch (cause) {
-            throw new APIError({cause, code: APIError.Code.InvalidImage})
+            throw new APIError({
+                cause,
+                code: APIError.Code.InvalidImage,
+                message: 'Sharp image processing error'
+            })
         }
 
-        APIError.assert(metadata.width && metadata.height, APIError.Code.InvalidImage)
+        APIError.assert(metadata.width && metadata.height, {
+            code: APIError.Code.InvalidImage,
+            message: 'Cannot obtain image width or height in its metadata'
+        })
 
         const defWidth: number|undefined = safeParseInt(config.get('proxy_store.max_image_width'))
         const defHeight: number|undefined = safeParseInt(config.get('proxy_store.max_image_height'))
