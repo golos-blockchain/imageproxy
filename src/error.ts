@@ -107,6 +107,7 @@ export class APIError extends Error {
         return {
             httpStatus: this.statusCode,
             error: (this.info && this.info.msg) || camelToSnake(ErrorCode[this.code]),
+            message: this.message,
             ...this.info,
         }
     }

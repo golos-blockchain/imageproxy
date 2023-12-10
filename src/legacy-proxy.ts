@@ -12,13 +12,20 @@ export async function legacyProxyHandler(ctx: KoaContext) {
     ctx.tag({handler: 'legacy-proxy'})
 
     APIError.assert(ctx.method === 'GET', APIError.Code.InvalidMethod)
-    APIError.assertParams(ctx.params, ['width', 'height', 'url'])
+    APIError.assertParams(ctx.params, ['url'])
 
-    const width = Number.parseInt(ctx.params['width'])
-    const height = Number.parseInt(ctx.params['height'])
+    let width = -1
+    let height = -1
 
-    APIError.assert(Number.isFinite(width), 'Invalid width')
-    APIError.assert(Number.isFinite(height), 'Invalid height')
+    if (ctx.params['width'] !== undefined || ctx.params['height'] !== undefined) {
+        APIError.assertParams(ctx.params, ['width', 'height'])
+
+        width = Number.parseInt(ctx.params['width'])
+        height = Number.parseInt(ctx.params['height'])
+
+        APIError.assert(Number.isFinite(width), 'Invalid width')
+        APIError.assert(Number.isFinite(height), 'Invalid height')
+    }
 
     let url: URL
     try {
@@ -30,8 +37,10 @@ export async function legacyProxyHandler(ctx: KoaContext) {
         throw new APIError({cause, code: APIError.Code.InvalidProxyUrl})
     }
 
+    const isOrig = width === -1 && height === -1
+
     const options: {[key: string]: any} = {
-        format: config.get('proxy_store.format') || 'webp',
+        format: isOrig ? 'png' : (config.get('proxy_store.format') || 'webp'),
         mode: 'fit',
     }
     if (width > 0) { options['width'] = width }
