@@ -31,6 +31,9 @@
       "max_image_height": 1024,
       "format": "webp",
       "max_avatar_width": 200,
-      "max_avatar_height": 200
+      "max_avatar_height": 200,
+      "backup_proxies": [
+        "steemitimages.com"
+      ]
   }
 }
