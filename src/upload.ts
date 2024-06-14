@@ -16,10 +16,16 @@ import { getRateLimit, saveRateLimit, UPLOAD_LIMITS } from './ratelimit'
 import Tarantool from './tarantool'
 import { mimeMagic, readStream, resizeIfTooLarge, safeParseInt, storeExists, storeWrite } from './utils'
 
-const MAX_IMAGE_SIZE = Number.parseInt(config.get('upload_store.max_image_size'))
-if (!Number.isFinite(MAX_IMAGE_SIZE)) {
-    throw new Error('Invalid upload_store.max_image_size')
+const configNumber = (key: string): number => {
+    const val = Number.parseInt(config.get(key))
+    if (!Number.isFinite(val)) {
+        throw new Error('Invalid ' + key)
+    }
+    return val
 }
+const MIN_IMAGE_SIZE = configNumber('upload_store.min_image_size')
+const MAX_IMAGE_SIZE = configNumber('upload_store.max_image_size')
+
 const SERVICE_URL = new URL(config.get('service_url'))
 let ACCOUNT_BLACKLIST: string[]
 try {
@@ -31,7 +37,7 @@ try {
 /**
  * Parse multi-part request and return first file found.
  */
-async function parseMultipart(request: http.IncomingMessage) {
+async function parseMultipart(request: http.IncomingMessage, fields?: { [key: string]: any }) {
     return new Promise<{stream: NodeJS.ReadableStream, mime: string, name: string}>((resolve, reject) => {
         const form = new Busboy({
             headers: request.headers,
@@ -40,6 +46,11 @@ async function parseMultipart(request: http.IncomingMessage) {
                 fileSize: MAX_IMAGE_SIZE,
             },
         })
+        if (fields) {
+            form.on('field', (name, val, info) => {
+                fields[name] = val
+            })
+        }
         form.on('file', (field, stream, name, encoding, mime) => {
             resolve({stream, mime, name})
         })
@@ -49,6 +60,53 @@ async function parseMultipart(request: http.IncomingMessage) {
         })
         request.pipe(form)
     })
+}
+
+async function checkGolosPower(account: any) {
+    const { golos_power } = UPLOAD_LIMITS
+    if (golos_power) {
+        const gprops = await golos.api.getDynamicGlobalPropertiesAsync()
+        const { Asset } = golos.utils
+        const { vestToGolos } = golos.formatter
+
+        const { vesting_shares,
+            delegated_vesting_shares, emission_delegated_vesting_shares,
+            received_vesting_shares, emission_received_vesting_shares, } = account
+        let vs = await Asset(vesting_shares)
+        // vs = vs.minus(Asset(delegated_vesting_shares))
+        // vs = vs.minus(Asset(emission_delegated_vesting_shares))
+        // vs = vs.plus(Asset(received_vesting_shares))
+        // vs = vs.plus(Asset(emission_received_vesting_shares))
+        vs = vestToGolos(vs, gprops.total_vesting_shares, gprops.total_vesting_fund_steem)
+        const vsF = parseFloat(vs.amountFloat)
+        const required = Asset(0, 3, 'GOLOS')
+        required.amountFloat = golos_power.toFixed(3)
+        APIError.assert(vsF > golos_power, {
+            code: APIError.Code.TooLowAccountGolosPower,
+            info: {
+                power: vs.toString(),
+                required: required.toString()
+            }
+        })
+    }
+}
+
+export async function startUploadHandler(ctx: KoaContext) {
+    ctx.tag({ handler: 'start_upload', })
+
+    APIError.assertParams(ctx.params, [ 'size', ])
+
+    const imgSize = Number.parseInt(ctx.params['size'])
+
+    const recommended = imgSize >= MIN_IMAGE_SIZE
+
+    ctx.status = 200
+    ctx.body = {
+        recommended,
+        max_image_size: MAX_IMAGE_SIZE,
+        min_image_size: MIN_IMAGE_SIZE,
+        hint: 'max_image_size is limit, min_image_size is recommendation'
+    }
 }
 
 export async function uploadHandler(ctx: KoaContext) {
@@ -67,7 +125,8 @@ export async function uploadHandler(ctx: KoaContext) {
 
     checkOrigin(ctx)
 
-    const file = await parseMultipart(ctx.req)
+    const fields: { [key: string]: any } = {}
+    const file = await parseMultipart(ctx.req, fields)
     const data = await readStream(file.stream)
 
     // extra check if client manges to lie about the content-length
@@ -107,10 +166,22 @@ export async function uploadHandler(ctx: KoaContext) {
     }
 
     const reputation = golos.formatter.reputation(account.reputation, true)
-    APIError.assert(reputation >= UPLOAD_LIMITS.reputation, APIError.Code.TooLowAccountReputation)
+    APIError.assert(reputation >= UPLOAD_LIMITS.reputation, {
+        code: APIError.Code.TooLowAccountReputation,
+        info: {
+            required: UPLOAD_LIMITS.reputation,
+            reputation
+        }
+    })
+
+    await checkGolosPower(account)
 
     const key = 'D' + multihash.toB58String(multihash.encode(imageHash, 'sha2-256'))
     const url = new URL(`${ key }/${ file.name }`, SERVICE_URL)
+
+    if (fields['fallback']) {
+        ctx.log.error('Imgur failure:', fields['fallback'], url.toString())
+    }
 
     let meta: any = {
         mime_type: file.mime,

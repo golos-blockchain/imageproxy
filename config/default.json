@@ -35,7 +35,8 @@
   "upload_limits": {
     "duration": 10080, // in minutes (=1 week)
     "max": 300, // max requests within duration
-    "reputation": 10 // minimum reputation needed for upload
+    "reputation": 10, // minimum reputation needed for upload,
+    "golos_power": 10 // minimum Golos Power (in GOLOS) needed for upload. Examples: 10, 10.5
   },
 
   // valid proxy store types are: "memory", "fs"
@@ -43,6 +44,8 @@
   // where to keep uploaded images
   "upload_store": {
     "type": "fs",
+     // if image is less, imageproxy will not recommended to upload it (use another services)
+    "min_image_size": 1000000, // 1mb
      // if the image is larger, it will not be uploaded and will give an error
     "max_image_size": 10000000, // 10mb
      // if image is larger, it will be resized before saving original to store

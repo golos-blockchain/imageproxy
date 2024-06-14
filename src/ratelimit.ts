@@ -22,6 +22,9 @@ function initUploadLimits(limits: any) {
     if (floor !== consumption) {
         res.duration = (floor + 1) * res.max
     }
+    if (res.golos_power && typeof(res.golos_power) !== 'number') {
+        throw new Error('upload_limits.golos_power should be a number, like 10, or 10.2, which means 10.000 GOLOS or 10.200 GOLOS. Or just omit it')
+    }
     return res
 }
 

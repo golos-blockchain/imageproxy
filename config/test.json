@@ -6,6 +6,7 @@
   "upload_limits": {
     "duration": 1111, // in minutes
     "max": 30, // max requests within duration
-    "reputation": 10 // minimum reputation needed for upload
+    "reputation": 10, // minimum reputation needed for upload,
+    "golos_power": 0 // minimum Golos Power (in GOLOS) needed for upload. Examples: 10, 10.5
   }
 }
