@@ -85,7 +85,6 @@ describe('upload_security', function() {
             acc: ACC_LIM,
             checkResp: false,
         })
-        console.log(body)
         checkError(response, body, 429, 'quota_exceeded')
         assert.equal(body.ratelimit.uploads_remaining, 0)
         assert.equal(body.ratelimit.capacity, 0)
@@ -169,6 +168,8 @@ describe('upload_security', function() {
                 assert.equal(upload.mime_type, 'image/jpeg')
             }
         }
+
+        console.log('-- check limit of uploaders we can request')
 
         var res = await needle('get', url + '?limit=51');
         assert.equal(res.body.error, 'limit cannot be greater than 50');

@@ -21,6 +21,7 @@ enum ErrorCode {
     NotFound,
     PayloadTooLarge,
     TooLowAccountReputation,
+    TooLowAccountGolosPower,
     QuotaExceeded,
     UpstreamError,
 }
@@ -43,6 +44,7 @@ const HttpCodes = new Map<ErrorCode, number>([
     [ErrorCode.NotFound, 404],
     [ErrorCode.PayloadTooLarge, 413],
     [ErrorCode.TooLowAccountReputation, 403],
+    [ErrorCode.TooLowAccountGolosPower, 403],
     [ErrorCode.QuotaExceeded, 429],
     [ErrorCode.UpstreamError, 400],
 ])

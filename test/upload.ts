@@ -95,6 +95,22 @@ describe('upload', function() {
         await clearProfile(port, ACC_LIM)
     })
 
+    it('start_upload', async function() {
+        console.log('-- start_upload - check too low size')
+
+        let size = 1024
+
+        var res = await needle('get', `:${port}/start_upload/${size}`)
+        checkNoError(res, res.body)
+        assert.equal(res.body.recommended, false)
+
+        size = 2*1024*1024
+
+        var res = await needle('get', `:${port}/start_upload/${size}`)
+        checkNoError(res, res.body)
+        assert.equal(res.body.recommended, true)
+    })
+
     it('should upload jpeg image + repeat by same acc', async function() {
         this.slow(1000)
         this.timeout(2000)
